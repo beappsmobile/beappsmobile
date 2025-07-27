@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BEAppsMobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="images/beappsmobile_logo.png" type="image/png">
 </head>
@@ -23,10 +27,15 @@
     </header>
     <main>
         <section class="hero">
-            <div class="container">
-                <img src="images/header-screen-laptop.png" alt="Header Screen Laptop" class="hero-image">
-                <h2>Control Your PC with few steps</h2>
-                <a href="#downloads" class="btn">Get Your PC Client</a>
+            <div class="container hero-container">
+                <div class="hero-content">
+                    <h2>Control Your PC With Your Phone</h2>
+                    <p>Seamlessly connect your mobile device to your computer. Type, present, and control with ease.</p>
+                    <a href="#downloads" class="btn">Get Your PC Client</a>
+                </div>
+                <div class="hero-image-wrapper">
+                    <img src="images/header-screen-laptop.png" alt="Header Screen Laptop" class="hero-image">
+                </div>
             </div>
         </section>
 
@@ -63,12 +72,36 @@
     <footer id="contact">
         <div class="container">
             <div class="footer-content">
-                <div class="contact-info">
-                    <h4>Contact Us</h4>
-                    <p>support@beappsmobile.com</p>
-                    <p>7 Soliman Gohar, Dokki, Egypt</p>
+                <div class="footer-section about">
+                    <a href="index.html" class="logo">
+                        <img src="images/beappsmobile_logo.png" alt="BEAppsMobile Logo">
+                        <span>BEAppsMobile</span>
+                    </a>
+                    <p>Providing simple and effective solutions for PC remote control.</p>
+                    <div class="contact">
+                        <span><i class="fas fa-envelope"></i> &nbsp; support@beappsmobile.com</span>
+                        <span><i class="fas fa-map-marker-alt"></i> &nbsp; 7 Soliman Gohar, Dokki, Egypt</span>
+                    </div>
                 </div>
-                <p class="copyright">Copyright © 2025 BEAppsMobile</p>
+                <div class="footer-section links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#downloads">Downloads</a></li>
+                        <li><a href="#video">Demo</a></li>
+                        <li><a href="privacy_policy.html">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section social">
+                    <h4>Follow Us</h4>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Copyright © 2025 BEAppsMobile. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
