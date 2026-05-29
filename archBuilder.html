@@ -167,8 +167,11 @@
   .connections-svg .temp-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4;pointer-events:none}
 
   /* ── Right Sidebar: Properties ── */
+  .sidebar-right-wrapper{position:relative;display:flex;align-items:flex-start}
   .sidebar-right{width:300px;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;transition:width .2s}
   .sidebar-right.collapsed{width:0;border:none;overflow:hidden}
+  .sidebar-toggle-btn{position:fixed;top:50%;right:300px;transform:translateY(-50%);width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:right .2s,background .15s,color .15s;z-index:60}
+  .sidebar-toggle-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
   .props-panel{padding:0}
   .props-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
   .props-header h3{font-size:14px;font-weight:600}
@@ -324,16 +327,21 @@
     </div>
 
     <!-- Right Sidebar: Properties -->
-    <div class="sidebar-right" id="sidebarRight">
-      <div id="propsPanel">
-        <div class="empty-state">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
-          <p>Select a node to<br>edit its properties</p>
+    <div class="sidebar-right-wrapper">
+      <div class="sidebar-right collapsed" id="sidebarRight">
+        <div id="propsPanel">
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
+            <p>Select a node to<br>edit its properties</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Floating toggle button for right sidebar -->
+<button class="sidebar-toggle-btn" id="sidebarRightToggle" title="Toggle properties panel">◀</button>
 
 <!-- Context Menu -->
 <div class="ctx-menu" id="ctxMenu">
@@ -836,6 +844,21 @@ function setupCanvasEvents(){
   });
 
   setupMinimapEvents();
+
+  // Right sidebar toggle
+  const rightPanel = document.getElementById('sidebarRight');
+  const rightToggle = document.getElementById('sidebarRightToggle');
+  if(rightToggle && rightPanel){
+    function updateTogglePos(){
+      rightToggle.style.right = rightPanel.classList.contains('collapsed') ? '16px' : '300px';
+    }
+    updateTogglePos();
+    rightToggle.addEventListener('click', () => {
+      rightPanel.classList.toggle('collapsed');
+      rightToggle.textContent = rightPanel.classList.contains('collapsed') ? '▶' : '◀';
+      updateTogglePos();
+    });
+  }
 }
 
 function getCanvasPos(e){
@@ -1313,18 +1336,35 @@ function renderConnections(){
 
   // Single shared defs
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-  const marker = document.createElementNS('http://www.w3.org/2000/svg','marker');
-  marker.setAttribute('id','arrow');
-  marker.setAttribute('markerWidth','10');
-  marker.setAttribute('markerHeight','7');
-  marker.setAttribute('refX','11');
-  marker.setAttribute('refY','3.5');
-  marker.setAttribute('orient','auto');
-  const polygon = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-  polygon.setAttribute('points','0 0, 10 3.5, 0 7');
-  polygon.setAttribute('fill','var(--text-muted)');
-  marker.appendChild(polygon);
-  defs.appendChild(marker);
+
+  // Forward arrow marker
+  const markerEnd = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  markerEnd.setAttribute('id','arrow');
+  markerEnd.setAttribute('markerWidth','10');
+  markerEnd.setAttribute('markerHeight','7');
+  markerEnd.setAttribute('refX','11');
+  markerEnd.setAttribute('refY','3.5');
+  markerEnd.setAttribute('orient','auto');
+  const polygonEnd = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  polygonEnd.setAttribute('points','0 0, 10 3.5, 0 7');
+  polygonEnd.setAttribute('fill','var(--text-muted)');
+  markerEnd.appendChild(polygonEnd);
+  defs.appendChild(markerEnd);
+
+  // Reverse arrow marker (for bidirectional)
+  const markerStart = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  markerStart.setAttribute('id','arrow-start');
+  markerStart.setAttribute('markerWidth','10');
+  markerStart.setAttribute('markerHeight','7');
+  markerStart.setAttribute('refX','9');
+  markerStart.setAttribute('refY','3.5');
+  markerStart.setAttribute('orient','auto-start-reverse');
+  const polygonStart = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  polygonStart.setAttribute('points','0 0, 10 3.5, 0 7');
+  polygonStart.setAttribute('fill','var(--text-muted)');
+  markerStart.appendChild(polygonStart);
+  defs.appendChild(markerStart);
+
   svg.appendChild(defs);
 
   // Remove old X buttons
@@ -1347,6 +1387,9 @@ function renderConnections(){
     path.setAttribute('d', d);
     path.setAttribute('data-conn-idx', i);
     path.setAttribute('marker-end', 'url(#arrow)');
+    if(conn.bidirectional){
+      path.setAttribute('marker-start', 'url(#arrow-start)');
+    }
 
     if(selectedNodeId && (conn.from === selectedNodeId || conn.to === selectedNodeId)){
       path.classList.add('active');
@@ -1375,6 +1418,7 @@ function renderConnections(){
 function showConnXButton(canvasX, canvasY, connIdx){
   // Remove existing
   document.querySelectorAll('.conn-x-btn').forEach(el => el.remove());
+  document.querySelectorAll('.conn-bidi-btn').forEach(el => el.remove());
 
   const btn = document.createElement('button');
   btn.className = 'conn-x-btn';
@@ -1427,6 +1471,59 @@ function showConnXButton(canvasX, canvasY, connIdx){
   });
 
   document.body.appendChild(btn);
+
+  // Bidirectional toggle button next to X
+  const conn = connections[connIdx];
+  const bidiBtn = document.createElement('button');
+  bidiBtn.className = 'conn-bidi-btn';
+  bidiBtn.textContent = '⇆';
+  bidiBtn.setAttribute('aria-label', 'Toggle bidirectional arrows');
+  bidiBtn.setAttribute('data-conn-idx', connIdx);
+
+  bidiBtn.style.position = 'fixed';
+  bidiBtn.style.left = (screenX + 14) + 'px';
+  bidiBtn.style.top = (screenY - 10) + 'px';
+  bidiBtn.style.zIndex = '150';
+  bidiBtn.style.width = '22px';
+  bidiBtn.style.height = '22px';
+  bidiBtn.style.borderRadius = '999px';
+  bidiBtn.style.border = '1px solid var(--border)';
+  bidiBtn.style.background = conn.bidirectional ? 'var(--accent)' : 'var(--bg-card)';
+  bidiBtn.style.color = conn.bidirectional ? '#fff' : 'var(--text-muted)';
+  bidiBtn.style.fontSize = '11px';
+  bidiBtn.style.cursor = 'pointer';
+  bidiBtn.style.display = 'inline-flex';
+  bidiBtn.style.alignItems = 'center';
+  bidiBtn.style.justifyContent = 'center';
+  bidiBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.35)';
+  bidiBtn.style.transition = 'background .15s,color .15s';
+
+  bidiBtn.addEventListener('mouseenter', () => {
+    if(!conn.bidirectional){
+      bidiBtn.style.background = 'var(--accent-glow)';
+      bidiBtn.style.color = 'var(--accent)';
+    }
+  });
+  bidiBtn.addEventListener('mouseleave', () => {
+    if(!conn.bidirectional){
+      bidiBtn.style.background = 'var(--bg-card)';
+      bidiBtn.style.color = 'var(--text-muted)';
+    }
+  });
+  bidiBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const idx = parseInt(bidiBtn.dataset.connIdx);
+    if(!isNaN(idx) && idx < connections.length){
+      pushUndo();
+      connections[idx].bidirectional = !connections[idx].bidirectional;
+      selectedConnIdx = null;
+      document.querySelectorAll('.conn-x-btn,.conn-bidi-btn').forEach(el => el.remove());
+      renderConnections();
+      saveToLocalStorage();
+    }
+  });
+
+  document.body.appendChild(bidiBtn);
 }
 
 function getPortRect(el, side){
@@ -1512,6 +1609,9 @@ function updatePropsPanel(){
       html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='Nginx'?' selected':''}>Nginx</option><option${val==='HAProxy'?' selected':''}>HAProxy</option><option${val==='API Gateway'?' selected':''}>API Gateway</option><option${val==='Cloudflare'?' selected':''}>Cloudflare</option></select></div>`;
     } else if(prop === 'type' && node.type === 'queue'){
       html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='RabbitMQ'?' selected':''}>RabbitMQ</option><option${val==='Kafka'?' selected':''}>Kafka</option><option${val==='SQS'?' selected':''}>SQS</option><option${val==='Redis Streams'?' selected':''}>Redis Streams</option></select></div>`;
+    } else if(prop === 'provider' && node.type === 'waf'){
+      const wafOpts = ['Cloudflare','AWS WAF','Azure WAF','GCP Cloud Armor','F5 BIG-IP','Imperva','Akamai','Sucuri','Other'];
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)">${wafOpts.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select></div>`;
     } else if(prop === 'provider'){
       html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='S3'?' selected':''}>S3</option><option${val==='GCS'?' selected':''}>GCS</option><option${val==='Azure Blob'?' selected':''}>Azure Blob</option><option${val==='Auth0'?' selected':''}>Auth0</option><option${val==='Keycloak'?' selected':''}>Keycloak</option></select></div>`;
     } else if(prop === 'mode'){
