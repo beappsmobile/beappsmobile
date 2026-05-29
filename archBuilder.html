@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workflow & Architecture Builder</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='7' height='7' rx='1.5' fill='%235b6bfa'/%3E%3Crect x='14' y='3' width='7' height='7' rx='1.5' fill='%235b6bfa'/%3E%3Crect x='3' y='14' width='7' height='7' rx='1.5' fill='%235b6bfa'/%3E%3Crect x='14' y='14' width='7' height='7' rx='1.5' fill='%235b6bfa'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0f1117">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg-dark:#0f1117;--bg-canvas:#1a1d27;--bg-panel:#161923;--bg-card:#1e2230;
+    --bg-hover:#252a3a;--border:#2a2f3f;--border-active:#5b6bfa;
+    --text-primary:#e8eaf0;--text-secondary:#9aa0b8;--text-muted:#6b7190;
+    --accent:#5b6bfa;--accent-glow:rgba(91,107,250,.25);
+    --green:#34d399;--yellow:#fbbf24;--red:#f87171;--blue:#60a5fa;
+    --purple:#a78bfa;--pink:#f472b6;--orange:#fb923c;--cyan:#22d3ee;
+    --node-trigger:var(--accent);--node-ai:var(--purple);--node-webhook:var(--green);
+    --node-email:var(--blue);--node-delay:var(--yellow);--node-condition:var(--orange);
+    --node-db:var(--pink);--node-action:var(--cyan);
+  }
+  html,body{height:100%;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-dark);color:var(--text-primary);overflow:hidden}
+
+  /* ── Layout ── */
+  .app{display:flex;flex-direction:column;height:100vh}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:var(--bg-panel);border-bottom:1px solid var(--border);z-index:100;flex-shrink:0}
+  .topbar-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-.3px}
+  .topbar-brand svg{opacity:.85}
+  .topbar-actions{display:flex;gap:8px;align-items:center}
+  .topbar-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);margin-right:12px}
+  .topbar-status .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+
+  /* ── Overflow menu (topbar) ── */
+  .topbar-overflow{position:relative}
+  .topbar-overflow-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--bg-dark);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s,color .15s}
+  .topbar-overflow-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
+  .topbar-overflow-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:190px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:200;display:none}
+  .topbar-overflow-menu.show{display:block}
+
+  /* ── Focus / accessibility ── */
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  button:focus-visible,.node-item:focus-visible,.zoom-btn:focus-visible,.ctx-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ::selection{background:var(--accent-glow);color:var(--text-primary)}
+
+  .main{display:flex;flex:1;overflow:hidden}
+
+  /* ── Left Sidebar: Node Palette ── */
+  .sidebar-left{width:240px;flex-shrink:0;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+  .sidebar-header{padding:10px 12px 6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between}
+  .sidebar-header button{
+    font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid var(--border);
+    background:var(--bg-dark);color:var(--text-muted);cursor:pointer;opacity:0.8;transition:all .15s;
+  }
+  .sidebar-header button:hover{background:var(--bg-hover);color:var(--text-secondary);opacity:1}
+  .palette-filter{padding:4px 8px 6px}
+  .palette-filter input{
+    width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);
+    background:var(--bg-dark);color:var(--text-primary);font-size:11px;outline:none;
+    transition:border-color .15s;
+  }
+  .palette-filter input::placeholder{color:var(--text-muted);font-size:10px}
+  .palette-filter input:focus{border-color:var(--accent)}
+  .palette-group{border-bottom:1px solid var(--border)}
+  .palette-group-header{
+    display:flex;align-items:center;gap:6px;
+    padding:9px 12px 7px;font-size:10px;
+    font-weight:600;text-transform:uppercase;letter-spacing:.8px;
+    color:var(--text-muted);cursor:pointer;user-select:none;
+  }
+  .palette-group-header:hover{color:var(--text-secondary)}
+  .palette-group-header .chev{
+    font-size:9px;transition:transform .18s;
+    display:inline-flex;align-items:center;
+  }
+  .palette-group.collapsed .palette-group-header .chev{
+    transform:rotate(-90deg);
+  }
+  .palette-group-header .group-title{flex:1}
+  .palette-group-header .count{
+    font-size:9px;color:var(--text-muted);
+    background:var(--bg-hover);padding:1px 6px;
+    border-radius:99px;
+  }
+  .palette-items{
+    overflow-y:auto;
+    max-height:60vh;
+    transition:max-height .22s ease, opacity .18s ease;
+  }
+  .palette-group.collapsed .palette-items{
+    max-height:0 !important;
+    opacity:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .node-item{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:grab;margin:1px 6px;border-radius:8px;font-size:12px;font-weight:500;color:var(--text-primary);transition:background .15s,color .15s;user-select:none}
+  .node-item:hover{background:var(--bg-hover)}
+  .node-item .icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+  .node-item .node-type-label{font-size:9px;color:var(--text-muted);display:block;margin-top:1px;font-weight:400}
+  .custom-btn{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 12px;margin:4px 8px 6px;
+    border-radius:8px;border:1px dashed var(--border);
+    background:transparent;color:var(--text-secondary);
+    font-size:11px;cursor:pointer;width:calc(100% - 16px);
+    transition:background .15s,color .15s;
+  }
+  .custom-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
+
+  .custom-item-actions{
+    display:flex;gap:4px;margin-left:auto;opacity:0;transition:opacity .15s;
+  }
+  .node-item:hover .custom-item-actions{opacity:1}
+  .custom-item-actions button{
+    width:20px;height:20px;border-radius:4px;border:none;
+    background:var(--bg-elevated);color:var(--text-secondary);
+    font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:background .15s,color .15s;
+  }
+  .custom-item-actions button:hover{background:var(--bg-hover);color:var(--text-primary)}
+  .custom-item-actions .del-btn:hover{color:#ff5c5c}
+
+  /* ── Canvas ── */
+  .canvas-container{flex:1;position:relative;overflow:hidden;cursor:grab;background:var(--bg-canvas)}
+  .canvas-container.grabbing{cursor:grabbing}
+  .canvas-container.connecting{cursor:crosshair}
+  .canvas{position:absolute;transform-origin:0 0}
+  .canvas-grid{position:absolute;inset:-5000px;width:10000px;height:10000px;background-image:radial-gradient(circle,var(--border) .8px,transparent .8px);background-size:24px 24px;opacity:.4}
+
+  /* ── Node Cards ── */
+  .node{position:absolute;width:200px;background:var(--bg-card);border:1.5px solid var(--border);border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.3);transition:box-shadow .2s,border-color .2s;user-select:none;z-index:10}
+  .node:hover{box-shadow:0 4px 20px rgba(0,0,0,.4)}
+  .node.selected{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 4px 20px rgba(0,0,0,.4)}
+  .node-header{display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-radius:10px 10px 0 0;cursor:grab}
+  .node-header .n-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .node-header .n-title{font-size:12.5px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .node-body{padding:4px 12px 10px}
+  .node-body .n-desc{font-size:11px;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .node-body .n-tag{display:inline-block;margin-top:6px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.06);color:var(--text-muted)}
+
+  /* Ports */
+  .port{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--bg-card);border:2px solid var(--border);cursor:crosshair;z-index:20;transition:border-color .15s,transform .15s,background .15s}
+  .port:hover{border-color:var(--accent);transform:scale(1.3);background:var(--accent)}
+  .port.port-right{right:-6px;top:50%;transform:translateY(-50%)}
+  .port.port-right:hover{transform:translateY(-50%) scale(1.3)}
+  .port.port-left{left:-6px;top:50%;transform:translateY(-50%)}
+  .port.port-left:hover{transform:translateY(-50%) scale(1.3)}
+  .port.port-top{top:-6px;left:50%;transform:translateX(-50%)}
+  .port.port-top:hover{transform:translateX(-50%) scale(1.3)}
+  .port.port-bottom{bottom:-6px;left:50%;transform:translateX(-50%)}
+  .port.port-bottom:hover{transform:translateX(-50%) scale(1.3)}
+  .port.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+  .port.connected{background:var(--border-active);border-color:var(--border-active)}
+  .port-label{position:absolute;font-size:9px;color:var(--text-muted);white-space:nowrap;pointer-events:none}
+
+  /* Delete button */
+  .node .delete-btn{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--red);border:2px solid var(--bg-card);color:#fff;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;z-index:30}
+  .node:hover .delete-btn,.node.selected .delete-btn{display:flex}
+
+  /* ── SVG Connections ── */
+  .connections-svg{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible}
+  .connections-svg path{fill:none;stroke:var(--text-muted);stroke-width:2;pointer-events:stroke;transition:stroke .15s,stroke-width .15s}
+  .connections-svg path:hover{stroke:var(--accent);stroke-width:3;pointer-events:stroke;cursor:pointer}
+  .connections-svg path.active{stroke:var(--accent);stroke-width:2.5}
+  .connections-svg .arrow{fill:var(--accent);pointer-events:none}
+
+  /* Temp connection line */
+  .connections-svg .temp-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4;pointer-events:none}
+
+  /* ── Right Sidebar: Properties ── */
+  .sidebar-right{width:300px;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;transition:width .2s}
+  .sidebar-right.collapsed{width:0;border:none;overflow:hidden}
+  .props-panel{padding:0}
+  .props-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .props-header h3{font-size:14px;font-weight:600}
+  .props-close{width:24px;height:24px;border-radius:6px;border:none;background:var(--bg-hover);color:var(--text-secondary);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .props-close:hover{background:var(--bg-dark);color:var(--text-primary)}
+
+  .prop-section{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04)}
+  .prop-section h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:10px}
+  .prop-row{margin-bottom:10px}
+  .prop-row label{display:block;font-size:11.5px;color:var(--text-secondary);margin-bottom:4px;font-weight:500}
+  .prop-row input,.prop-row select,.prop-row textarea{width:100%;padding:8px 10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12.5px;font-family:inherit;outline:none;transition:border-color .15s}
+  .prop-row input:focus,.prop-row select:focus,.prop-row textarea:focus{border-color:var(--accent)}
+  .prop-row textarea{resize:vertical;min-height:60px}
+  .prop-row select{cursor:pointer}
+  .prop-row input[type="color"]{height:34px;padding:4px;cursor:pointer}
+
+  .btn{padding:8px 14px;border-radius:6px;border:none;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .15s,color .15s;font-family:inherit}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#4a5ae8}
+  .btn-danger{background:rgba(248,113,113,.15);color:var(--red)}
+  .btn-danger:hover{background:rgba(248,113,113,.25)}
+  .btn-sm{padding:5px 10px;font-size:11px}
+  .btn-block{width:100%;margin-top:6px}
+  .btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+
+  /* ── Summary Panel ── */
+  .summary-bar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:10px 20px;display:flex;gap:24px;align-items:center;z-index:50;box-shadow:0 4px 24px rgba(0,0,0,.35);white-space:nowrap}
+  .summary-item{text-align:center}
+  .summary-item .s-val{font-size:18px;font-weight:700;line-height:1.2}
+  .summary-item .s-label{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  .summary-divider{width:1px;height:30px;background:var(--border)}
+
+  /* ── Minimap ── */
+  .minimap{position:absolute;bottom:80px;right:16px;width:160px;height:110px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;z-index:50;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+  .minimap-viewport{position:absolute;border:1px solid var(--accent);background:var(--accent-glow);pointer-events:none;border-radius:2px}
+  .minimap-node{position:absolute;width:6px;height:4px;background:var(--text-muted);border-radius:1px}
+
+  /* ── Zoom Controls ── */
+  .zoom-controls{position:absolute;bottom:80px;left:16px;display:flex;flex-direction:column;gap:4px;z-index:50}
+  .zoom-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s;border:none}
+  .zoom-btn:hover{background:var(--bg-hover)}
+  .zoom-level{font-size:11px;color:var(--text-muted);text-align:center;padding:4px 0}
+
+  /* ── Context Menu ── */
+  .ctx-menu{position:fixed;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:200;display:none}
+  .ctx-menu.show{display:block}
+  .ctx-item{padding:7px 12px;font-size:12.5px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text-primary);transition:background .1s}
+  .ctx-item:hover{background:var(--bg-hover)}
+  .ctx-item.danger{color:var(--red)}
+  .ctx-item.danger:hover{background:rgba(248,113,113,.1)}
+  .ctx-sep{height:1px;background:var(--border);margin:4px 0}
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar{width:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+  /* ── Tooltip ── */
+  .tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-dark);border:1px solid var(--border);color:var(--text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;white-space:nowrap;pointer-events:none;z-index:300;opacity:0;transition:opacity .15s}
+  .node:hover .tooltip{opacity:1}
+
+  /* ── Animations ── */
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .node{animation:fadeIn .25s ease}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .running .port{animation:pulse 1.2s infinite}
+
+  /* ── Empty state ── */
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+  .empty-state svg{opacity:.3;margin-bottom:12px}
+  .empty-state p{font-size:13px;line-height:1.6}
+
+  /* ── Modal ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:center;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;min-width:340px;max-width:90vw;box-shadow:0 16px 48px rgba(0,0,0,.5)}
+  .modal h3{font-size:16px;margin-bottom:6px}
+  .modal p{font-size:13px;color:var(--text-secondary);margin-bottom:16px}
+
+  /* ── Keyboard shortcut hints ── */
+  .kbd{display:inline-block;padding:1px 5px;background:var(--bg-dark);border:1px solid var(--border);border-radius:3px;font-size:10px;color:var(--text-muted);font-family:monospace}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><line x1="10" y1="6.5" x2="14" y2="6.5" stroke-dasharray="2 2"/><line x1="6.5" y1="10" x2="6.5" y2="14" stroke-dasharray="2 2"/><line x1="17.5" y1="10" x2="17.5" y2="14" stroke-dasharray="2 2"/></svg>
+      Workflow & Architecture Builder
+    </div>
+    <div class="topbar-status"><span class="dot"></span> Ready</div>
+    <div class="topbar-actions">
+      <input type="file" id="fileInput" accept=".wflow,.json" style="display:none" onchange="openFlow(event)">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('fileInput').click()" title="Open a saved flow">Open</button>
+      <button class="btn btn-ghost btn-sm" onclick="downloadFlow()" title="Download flow as JSON">↓ Save</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearAll()" title="Clear canvas">Clear</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleSummary()" title="Toggle summary">Summary</button>
+      <button class="btn btn-primary btn-sm" onclick="runWorkflow()">▶ Run</button>
+      <div class="topbar-overflow">
+        <button class="topbar-overflow-btn" id="topbarOverflowBtn" aria-label="More actions" aria-expanded="false">⋮</button>
+        <div class="topbar-overflow-menu" id="topbarOverflowMenu" role="menu">
+          <div class="ctx-item" role="menuitem" onclick="clearCache()">🧹 Clear Cache</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Left Sidebar: Node Palette -->
+    <div class="sidebar-left">
+      <div class="sidebar-header">
+        Node Types
+        <button id="collapseAllBtn" title="Collapse/expand all groups">Collapse All</button>
+      </div>
+      <div class="palette-filter">
+        <input type="text" id="paletteFilter" placeholder="Filter components…" aria-label="Filter components">
+      </div>
+      <div id="nodePalette"></div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-container" id="canvasContainer">
+      <div class="canvas" id="canvas">
+        <div class="canvas-grid"></div>
+        <svg class="connections-svg" id="connectionsSvg"></svg>
+      </div>
+
+      <!-- Minimap -->
+      <div class="minimap" id="minimap"></div>
+
+      <!-- Zoom Controls -->
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomIn()" title="Zoom in">+</button>
+        <div class="zoom-level" id="zoomLevel">100%</div>
+        <button class="zoom-btn" onclick="zoomOut()" title="Zoom out">−</button>
+        <button class="zoom-btn" onclick="resetZoom()" title="Reset view" style="margin-top:4px;font-size:12px">⌂</button>
+      </div>
+
+      <!-- Summary Bar -->
+      <div class="summary-bar" id="summaryBar">
+        <div class="summary-item"><div class="s-val" id="sumNodes">0</div><div class="s-label">Nodes</div></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item"><div class="s-val" id="sumConnections">0</div><div class="s-label">Links</div></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item"><div class="s-val" id="sumTypes">0</div><div class="s-label">Types</div></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item"><div class="s-val" id="sumDuration">—</div><div class="s-label">Est. Time</div></div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar: Properties -->
+    <div class="sidebar-right" id="sidebarRight">
+      <div id="propsPanel">
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
+          <p>Select a node to<br>edit its properties</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="duplicateNode()">⧉ Duplicate</div>
+  <div class="ctx-item" onclick="renamePrompt()">✎ Rename</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="deleteSelected()">✕ Delete</div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA: Node Types
+// ═══════════════════════════════════════════
+
+// AI Workflow nodes
+const AI_FLOW_TYPES = {
+  trigger:         { label:'Trigger',          icon:'⚡', color:'var(--node-trigger)',   desc:'Starts the workflow',                   props:['name','event','source'] },
+  ai_prompt:       { label:'AI Prompt',        icon:'🤖', color:'var(--node-ai)',       desc:'Generates AI output',                   props:['name','prompt','model','temperature'] },
+  webhook:         { label:'Webhook',          icon:'🔗', color:'var(--node-webhook)',  desc:'HTTP endpoint handler',               props:['name','method','url','headers'] },
+  email:           { label:'Email',            icon:'✉️', color:'var(--node-email)',    desc:'Send email notification',               props:['name','to','subject','body'] },
+  delay:           { label:'Delay',            icon:'⏱️', color:'var(--node-delay)',    desc:'Wait before continuing',                props:['name','duration','unit'] },
+  condition:       { label:'Condition',        icon:'🔀', color:'var(--node-condition)',desc:'Route based on logic',                  props:['name','expression','if_true','if_false'] },
+  schedule:        { label:'Schedule',         icon:'🕓', color:'var(--node-delay)',    desc:'Run on a cron schedule',                props:['name','cron','tz'] },
+  code:            { label:'Code',             icon:'🧩', color:'var(--node-action)',   desc:'Run custom code / script',              props:['name','language','script'] },
+  transform:       { label:'Transform',        icon:'🔁', color:'var(--node-condition)',desc:'Transform / map payload fields',        props:['name','mapping'] },
+  aggregate:       { label:'Aggregate',        icon:'🧮', color:'var(--node-ai)',       desc:'Combine multiple inputs into one',      props:['name','strategy','timeout'] },
+  error_handler:   { label:'Error Handler',    icon:'🚨', color:'var(--red)',           desc:'Handle errors / fallback logic',        props:['name','strategy','retry'] },
+  notify:          { label:'Notify',           icon:'🔔', color:'var(--node-email)',    desc:'Slack/Teams/Discord notification',      props:['name','channel','message'] },
+  llm_chain:       { label:'LLM Chain',        icon:'🧠', color:'var(--node-ai)',       desc:'Sequential LLM steps',                  props:['name','steps','model'] },
+  tool_use:        { label:'Tool Use',         icon:'🧰', color:'var(--node-action)',   desc:'Let AI call external tools',            props:['name','tools','mode'] },
+  guardrail:       { label:'Guardrail',        icon:'🛡️', color:'var(--green)',         desc:'Validate / filter AI input or output',  props:['name','rules','action'] },
+  memory:          { label:'Memory',           icon:'🧬', color:'var(--purple)',        desc:'Conversation / context memory',         props:['name','type','ttl'] },
+  file_op:         { label:'File Operation',   icon:'📄', color:'var(--node-db)',       desc:'Upload, download, or transform files',  props:['name','operation','path'] },
+  http_request:    { label:'HTTP Request',     icon:'🌐', color:'var(--blue)',          desc:'Send arbitrary HTTP request',           props:['name','method','url','auth'] },
+  human_in_loop:   { label:'Human-in-the-Loop',icon:'👤', color:'var(--orange)',        desc:'Pause for human approval or input',     props:['name','assignee','timeout'] },
+};
+
+// IT Architecture - Core Services
+const IT_CORE_TYPES = {
+  db:              { label:'Database',         icon:'🗄️', color:'var(--node-db)',       desc:'Database instance',                     props:['name','engine','version','region'] },
+  app:             { label:'Application',      icon:'🖥️', color:'var(--node-action)',   desc:'Application service',                   props:['name','language','framework','port'] },
+  web:             { label:'Web Server',       icon:'🌐', color:'var(--node-email)',    desc:'Web server / load balancer',            props:['name','type','domain'] },
+  proxy:           { label:'API Gateway',      icon:'🔀', color:'var(--node-condition)',desc:'API gateway / reverse proxy',           props:['name','type','auth'] },
+  cache:           { label:'Cache',            icon:'⚡', color:'var(--node-delay)',    desc:'Cache layer (Redis, Memcached)',        props:['name','engine','ttl'] },
+  storage:         { label:'Object Storage',   icon:'📦', color:'var(--node-ai)',       desc:'Blob / file storage',                   props:['name','provider','region'] },
+  auth:            { label:'Auth Service',     icon:'🔐', color:'var(--node-trigger)',  desc:'Authentication / OIDC',                 props:['name','provider','mode'] },
+  monitor:         { label:'Monitoring',       icon:'📊', color:'var(--node-email)',    desc:'Monitoring / logging',                  props:['name','tools','level'] },
+  search:          { label:'Search Engine',    icon:'🔎', color:'var(--yellow)',        desc:'Search / full-text index',              props:['name','engine','index'] },
+  worker:          { label:'Worker',           icon:'🛠️', color:'var(--node-action)',   desc:'Background worker / job processor',     props:['name','concurrency','queue'] },
+  config:          { label:'Config Server',    icon:'⚙️', color:'var(--node-action)',   desc:'Centralized configuration',             props:['name','source','env'] },
+  backup:          { label:'Backup',           icon:'💾', color:'var(--node-db)',       desc:'Backup / restore service',              props:['name','schedule','destination'] },
+};
+
+// Messaging / MQ / Broker
+const IT_MESSAGING_TYPES = {
+  queue:           { label:'Message Queue',    icon:'📥', color:'var(--node-webhook)',  desc:'Message queue / broker',                props:['name','type','durability'] },
+  event_bus:       { label:'Event Bus',        icon:'📡', color:'var(--yellow)',        desc:'Event-driven messaging backbone',       props:['name','type','model'] },
+  rabbitmq:        { label:'RabbitMQ',         icon:'🐇', color:'var(--green)',         desc:'AMQP message broker',                   props:['name','vhost','durable'] },
+  kafka:           { label:'Kafka',            icon:'🐦', color:'var(--blue)',          desc:'Event streaming platform',              props:['name','topics','replication'] },
+  pulsar:          { label:'Pulsar',           icon:'💫', color:'var(--purple)',        desc:'Cloud-native event streaming',          props:['name','tenant','namespace'] },
+  sqs:             { label:'SQS',              icon:'📨', color:'var(--orange)',        desc:'AWS Simple Queue Service',              props:['name','type','visibility'] },
+  sns:             { label:'SNS',              icon:'📣', color:'var(--orange)',        desc:'AWS Simple Notification Service',       props:['name','protocol','endpoints'] },
+  nats:            { label:'NATS',             icon:'🚀', color:'var(--cyan)',          desc:'Lightweight messaging system',          props:['name','mode','auth'] },
+  amqp:            { label:'AMQP Broker',      icon:'🔌', color:'var(--node-webhook)',  desc:'Generic AMQP broker',                   props:['name','version','durable'] },
+};
+
+// Kubernetes
+const IT_KUBERNETES_TYPES = {
+  k8s:             { label:'Kubernetes',       icon:'☸️', color:'var(--blue)',          desc:'Container orchestration',               props:['name','cluster','namespace'] },
+  k8s_deployment:  { label:'Deployment',       icon:'🚀', color:'var(--blue)',          desc:'Replica-based workload',                props:['name','replicas','image'] },
+  k8s_statefulset: { label:'StatefulSet',      icon:'🗃️', color:'var(--purple)',        desc:'Stateful workload with stable IDs',     props:['name','replicas','storageClass'] },
+  k8s_daemonset:   { label:'DaemonSet',        icon:'🛡️', color:'var(--green)',         desc:'Run pods on every node',                props:['name','selector','priority'] },
+  k8s_cronjob:     { label:'CronJob',          icon:'⏰', color:'var(--yellow)',        desc:'Scheduled jobs',                        props:['name','schedule','image'] },
+  k8s_job:         { label:'Job',              icon:'🧾', color:'var(--node-action)',   desc:'One-time or batch job',                 props:['name','completions','image'] },
+  k8s_service:     { label:'Service',          icon:'🔗', color:'var(--node-email)',    desc:'Service exposure (ClusterIP/NodePort)', props:['name','type','port'] },
+  k8s_hpa:         { label:'HPA',              icon:'📈', color:'var(--orange)',        desc:'Horizontal Pod Autoscaler',             props:['name','minReplicas','maxReplicas'] },
+  k8s_pvc:         { label:'PVC',              icon:'💿', color:'var(--node-db)',       desc:'Persistent Volume Claim',               props:['name','storageClass','size'] },
+  k8s_configmap:   { label:'ConfigMap',        icon:'🗂️', color:'var(--cyan)',          desc:'Configuration data for pods',           props:['name','namespace','source'] },
+  k8s_secret:      { label:'Secret',           icon:'🔑', color:'var(--red)',           desc:'Sensitive data for pods',               props:['name','type','namespace'] },
+  k8s_ingress:     { label:'Ingress (K8s)',    icon:'🌐', color:'var(--green)',         desc:'Ingress resource for external access',  props:['name','host','tls'] },
+};
+
+// Networking & Security
+const IT_NETWORK_TYPES = {
+  cdn:             { label:'CDN',              icon:'🌍', color:'var(--cyan)',          desc:'Content delivery network',              props:['name','provider','region'] },
+  service_mesh:    { label:'Service Mesh',     icon:'🕸️', color:'var(--purple)',        desc:'Service-to-service communication',      props:['name','mesh','mtls'] },
+  vault:           { label:'Secrets Vault',    icon:'🔒', color:'var(--node-db)',       desc:'Secure secrets / keys management',      props:['name','provider','mode'] },
+  ingress:         { label:'Ingress',          icon:'🚪', color:'var(--green)',         desc:'Cluster ingress controller',            props:['name','controller','tls'] },
+  firewall:        { label:'Firewall',         icon:'🧱', color:'var(--red)',           desc:'Network firewall / WAF',                props:['name','mode','policy'] },
+  vpn:             { label:'VPN',              icon:'🔒', color:'var(--blue)',          desc:'Secure tunnel / site-to-site',          props:['name','protocol','region'] },
+  lb:              { label:'Load Balancer',    icon:'⚖️', color:'var(--yellow)',        desc:'Traffic distribution layer',            props:['name','algorithm','healthCheck'] },
+  tls_terminator:  { label:'TLS Terminator',   icon:'🔐', color:'var(--green)',         desc:'TLS termination / mTLS endpoint',       props:['name','certManager','mode'] },
+  waf:             { label:'WAF',              icon:'🛡️', color:'var(--orange)',        desc:'Web application firewall',              props:['name','provider','mode'] },
+  rate_limit:      { label:'Rate Limiter',     icon:'🚦', color:'var(--orange)',        desc:'Throttle requests / abuse protection',  props:['name','strategy','limit'] },
+};
+
+// CI/CD & Infra
+const IT_CICD_TYPES = {
+  ci:              { label:'CI Pipeline',      icon:'🔨', color:'var(--node-action)',   desc:'Continuous integration pipeline',       props:['name','provider','branch'] },
+  cd:              { label:'CD Pipeline',      icon:'🚀', color:'var(--accent)',        desc:'Continuous deployment pipeline',        props:['name','provider','env'] },
+  registry:        { label:'Container Registry',icon:'📦', color:'var(--node-ai)',      desc:'Image registry',                        props:['name','provider','scope'] },
+  infra_as_code:   { label:'IaC',              icon:'📜', color:'var(--purple)',        desc:'Infrastructure as code (Terraform/Bicep)',props:['name','tool','state'] },
+  git:             { label:'Git Repo',         icon:'🐙', color:'var(--text-muted)',    desc:'Source control repository',             props:['name','provider','branch'] },
+};
+
+// All built-in types (merged)
+const IT_ARCH_TYPES = {
+  ...IT_CORE_TYPES,
+  ...IT_MESSAGING_TYPES,
+  ...IT_KUBERNETES_TYPES,
+  ...IT_NETWORK_TYPES,
+  ...IT_CICD_TYPES,
+};
+
+const NODE_TYPES = {
+  ...AI_FLOW_TYPES,
+  ...IT_ARCH_TYPES,
+};
+
+// Custom types (runtime)
+const CUSTOM_TYPES = {};
+
+const COLORS = ['#5b6bfa','#a78bfa','#34d399','#60a5fa','#fbbf24','#fb923c','#f472b6','#22d3ee'];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let nodes = [];
+let connections = [];
+let selectedNodeId = null;
+let nextId = 1;
+let connectingFrom = null;
+
+// Undo/redo
+let undoStack = [];
+let redoStack = [];
+const MAX_UNDO = 80;
+
+// Canvas pan/zoom
+let panX = 0, panY = 0, scale = 1;
+let isPanning = false, panStart = {x:0,y:0};
+
+// Drag
+let dragNode = null, dragOffset = {x:0,y:0};
+let isConnecting = false;
+
+// Clipboard (Ctrl+C/V)
+let clipboardNode = null;
+
+// Selected connection (for X button)
+let selectedConnIdx = null;
+
+// ═══════════════════════════════════════════
+// UNDO / REDO
+// ═══════════════════════════════════════════
+function pushUndo(){
+  const snap = JSON.stringify({ nodes, connections });
+  undoStack.push(snap);
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  redoStack = [];
+}
+
+function undo(){
+  if (!undoStack.length) return;
+  pushRedoFromCurrent();
+  const data = JSON.parse(undoStack.pop());
+  applyState(data.nodes, data.connections);
+}
+
+function redo(){
+  if (!redoStack.length) return;
+  pushUndoFromCurrent();
+  const data = JSON.parse(redoStack.pop());
+  applyState(data.nodes, data.connections);
+}
+
+function pushRedoFromCurrent(){
+  const snap = JSON.stringify({ nodes, connections });
+  redoStack.push(snap);
+  if (redoStack.length > MAX_UNDO) redoStack.shift();
+}
+
+function pushUndoFromCurrent(){
+  const snap = JSON.stringify({ nodes, connections });
+  undoStack.push(snap);
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+}
+
+function applyState(nextNodes, nextConns){
+  // Clean DOM
+  document.querySelectorAll('.node').forEach(el => el.remove());
+  nodes = nextNodes;
+  connections = nextConns;
+  selectedNodeId = null;
+  nextId = nodes.reduce((m, n) => Math.max(m, n.id || 0), 0) + 1;
+  nodes.forEach(n => renderNode(n));
+  renderConnections();
+  updateSummary();
+  updateMinimap();
+  updatePropsPanel();
+}
+
+// ═══════════════════════════════════════════
+// LOCAL STORAGE (Browser Cache)
+// ═══════════════════════════════════════════
+const LS_WORKFLOW_KEY = 'wf_last_workflow';
+const LS_CUSTOM_KEY = 'wf_custom_types';
+const LS_PALETTE_GROUPS_KEY = 'wf_palette_groups';
+
+function saveToLocalStorage(){
+  try {
+    const data = {
+      version: 1,
+      nodes,
+      connections,
+      nextId
+    };
+    localStorage.setItem(LS_WORKFLOW_KEY, JSON.stringify(data));
+
+    localStorage.setItem(LS_CUSTOM_KEY, JSON.stringify(CUSTOM_TYPES));
+  } catch (e) {
+    // Storage full or unavailable; silently ignore
+  }
+}
+
+function loadFromLocalStorage(){
+  try {
+    const raw = localStorage.getItem(LS_WORKFLOW_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.connections)) return null;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function loadCustomFromLocalStorage(){
+  try {
+    const raw = localStorage.getItem(LS_CUSTOM_KEY);
+    if (!raw) return {};
+    const data = JSON.parse(raw);
+    return (data && typeof data === 'object') ? data : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function loadPaletteGroupStates(){
+  try {
+    const raw = localStorage.getItem(LS_PALETTE_GROUPS_KEY);
+    if (!raw) return {};
+    const data = JSON.parse(raw);
+    return (data && typeof data === 'object') ? data : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function savePaletteGroupStates(states){
+  try {
+    localStorage.setItem(LS_PALETTE_GROUPS_KEY, JSON.stringify(states));
+  } catch (e) {
+    // ignore
+  }
+}
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init(){
+// Load custom types from cache
+  const cachedCustom = loadCustomFromLocalStorage();
+  Object.assign(CUSTOM_TYPES, cachedCustom);
+  buildPalette();
+  setupCanvasEvents();
+   const cached = loadFromLocalStorage();
+
+  if (cached) {
+    // Restore cached workflow (even if empty, to respect Clear)
+    nodes = cached.nodes || [];
+    connections = cached.connections || [];
+    nextId = cached.nextId || (nodes.reduce((m, n) => Math.max(m, n.id || 0), 0) + 1);
+
+    nodes.forEach(n => renderNode(n));
+    renderConnections();
+    updateSummary();
+    updateMinimap();
+  } else {
+    // No cache at all: load sample workflow
+    loadSampleWorkflow();
+  }
+}
+
+// ═══════════════════════════════════════════
+// PALETTE
+// ═══════════════════════════════════════════
+function buildPalette(){
+  const el = document.getElementById('nodePalette');
+  el.innerHTML = '';
+  const groupStates = loadPaletteGroupStates();
+
+  // AI Workflow group
+  addPaletteGroup(el, 'AI Workflow', AI_FLOW_TYPES, groupStates['AI Workflow']);
+
+  // IT Architecture - Core Services
+  addPaletteGroup(el, 'IT Core Services', IT_CORE_TYPES, groupStates['IT Core Services']);
+
+  // Messaging / MQ / Broker
+  addPaletteGroup(el, 'Messaging & Broker', IT_MESSAGING_TYPES, groupStates['Messaging & Broker']);
+
+  // Kubernetes
+  addPaletteGroup(el, 'Kubernetes', IT_KUBERNETES_TYPES, groupStates['Kubernetes']);
+
+  // Networking & Security
+  addPaletteGroup(el, 'Networking & Security', IT_NETWORK_TYPES, groupStates['Networking & Security']);
+
+  // CI/CD & Infra
+  addPaletteGroup(el, 'CI/CD & Infra', IT_CICD_TYPES, groupStates['CI/CD & Infra']);
+
+  // Custom group
+  const customGroup = document.createElement('div');
+  customGroup.className = 'palette-group';
+  if(groupStates['Custom']) customGroup.classList.add('collapsed');
+  const header = document.createElement('div');
+  header.className = 'palette-group-header';
+  const customCount = Object.keys(CUSTOM_TYPES).length;
+  header.innerHTML = `<span class="chev">▾</span><span class="group-title">Custom</span><span class="count">${customCount || '0'}</span>`;
+  header.addEventListener('click', () => {
+    customGroup.classList.toggle('collapsed');
+    const states = loadPaletteGroupStates();
+    states['Custom'] = customGroup.classList.contains('collapsed');
+    savePaletteGroupStates(states);
+  });
+  customGroup.appendChild(header);
+
+  const customItems = document.createElement('div');
+  customItems.className = 'palette-items';
+  customItems.style.maxHeight = '800px';
+  customItems.style.opacity = '1';
+
+  for(const [key, type] of Object.entries(CUSTOM_TYPES)){
+    const div = document.createElement('div');
+    div.className = 'node-item';
+    div.draggable = true;
+    div.dataset.type = 'custom_' + key;
+    div.innerHTML = `
+      <div class="icon" style="background:${type.color}22;color:${type.color}">${type.icon || '⚙️'}</div>
+      <div style="flex:1;min-width:0"><span>${type.label}</span><span class="node-type-label">${type.desc || ''}</span></div>
+      <div class="custom-item-actions">
+        <button class="edit-btn" title="Edit">✎</button>
+        <button class="del-btn" title="Delete">✕</button>
+      </div>`;
+    div.addEventListener('dragstart', onPaletteDragStart);
+    div.querySelector('.edit-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCustomComponentDialog(key);
+    });
+    div.querySelector('.del-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteCustomType(key);
+    });
+    customItems.appendChild(div);
+  }
+
+  const btn = document.createElement('button');
+  btn.className = 'custom-btn';
+  btn.textContent = '+ New Custom Component';
+  btn.addEventListener('click', openCustomComponentDialog);
+  customItems.appendChild(btn);
+
+  customGroup.appendChild(customItems);
+  el.appendChild(customGroup);
+}
+
+function addPaletteGroup(container, title, types, startCollapsed){
+  const group = document.createElement('div');
+  group.className = 'palette-group';
+  if(startCollapsed) group.classList.add('collapsed');
+
+  const header = document.createElement('div');
+  header.className = 'palette-group-header';
+  header.innerHTML = `<span class="chev">▾</span><span class="group-title">${title}</span><span class="count">${Object.keys(types).length}</span>`;
+  header.addEventListener('click', () => {
+    group.classList.toggle('collapsed');
+    const states = loadPaletteGroupStates();
+    states[title] = group.classList.contains('collapsed');
+    savePaletteGroupStates(states);
+  });
+  group.appendChild(header);
+
+  const items = document.createElement('div');
+  items.className = 'palette-items';
+  items.style.maxHeight = '800px';
+  items.style.opacity = '1';
+
+  for(const [key, type] of Object.entries(types)){
+    const div = document.createElement('div');
+    div.className = 'node-item';
+    div.draggable = true;
+    div.dataset.type = key;
+    div.innerHTML = `<div class="icon" style="background:${type.color}22;color:${type.color}">${type.icon}</div><div><span>${type.label}</span><span class="node-type-label">${type.desc}</span></div>`;
+    div.dataset.searchText = (type.label + ' ' + (type.desc || '')).toLowerCase();
+    div.addEventListener('dragstart', onPaletteDragStart);
+    items.appendChild(div);
+  }
+
+  group.appendChild(items);
+  container.appendChild(group);
+}
+
+function onPaletteDragStart(e){
+  e.dataTransfer.setData('nodeType', e.currentTarget.dataset.type);
+  e.dataTransfer.effectAllowed = 'copy';
+}
+
+function applyPaletteFilter(){
+  const q = (document.getElementById('paletteFilter')?.value || '').toLowerCase().trim();
+  document.querySelectorAll('#nodePalette .node-item').forEach(item => {
+    const text = (item.dataset.searchText || '').toLowerCase();
+    item.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════
+// CANVAS EVENTS
+// ═══════════════════════════════════════════
+function setupCanvasEvents(){
+  const container = document.getElementById('canvasContainer');
+
+  container.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const type = e.dataTransfer.getData('nodeType');
+    if(!type) return;
+    const rect = container.getBoundingClientRect();
+    const x = (e.clientX - rect.left - panX) / scale;
+    const y = (e.clientY - rect.top - panY) / scale;
+    addNode(type, x - 100, y - 30);
+  });
+
+  container.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+  container.addEventListener('wheel', onWheel, {passive:false});
+  container.addEventListener('contextmenu', onContextMenu);
+  window.addEventListener('click', (e) => {
+    hideContextMenu();
+    if(!e.target.closest('.topbar-overflow')) closeTopbarOverflow();
+  });
+  window.addEventListener('keydown', onKeyDown);
+
+  // Palette filter
+  const filterInput = document.getElementById('paletteFilter');
+  if(filterInput){
+    filterInput.addEventListener('input', applyPaletteFilter);
+  }
+
+  // Collapse All / Expand All button
+  const collapseBtn = document.getElementById('collapseAllBtn');
+  if(collapseBtn){
+    collapseBtn.addEventListener('click', () => {
+      const groups = document.querySelectorAll('.palette-group');
+      const allCollapsed = Array.from(groups).every(g => g.classList.contains('collapsed'));
+      groups.forEach(g => {
+        if(allCollapsed) g.classList.remove('collapsed');
+        else g.classList.add('collapsed');
+      });
+      collapseBtn.textContent = allCollapsed ? 'Collapse All' : 'Expand All';
+
+      const states = loadPaletteGroupStates();
+      groups.forEach(g => {
+        const titleEl = g.querySelector('.group-title');
+        if(titleEl){
+          states[titleEl.textContent] = g.classList.contains('collapsed');
+        }
+      });
+      savePaletteGroupStates(states);
+    });
+  }
+
+  // Overflow menu
+  const overflowBtn = document.getElementById('topbarOverflowBtn');
+  const overflowMenu = document.getElementById('topbarOverflowMenu');
+  overflowBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = overflowMenu.classList.contains('show');
+    overflowMenu.classList.toggle('show');
+    overflowBtn.setAttribute('aria-expanded', String(!isOpen));
+  });
+  overflowBtn.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      overflowBtn.click();
+    }
+  });
+
+  setupMinimapEvents();
+}
+
+function getCanvasPos(e){
+  const rect = document.getElementById('canvasContainer').getBoundingClientRect();
+  return { x: (e.clientX - rect.left - panX) / scale, y: (e.clientY - rect.top - panY) / scale };
+}
+
+function onMouseDown(e){
+  hideContextMenu();
+  if(e.target.closest('.node')){
+    const nodeEl = e.target.closest('.node');
+    const nodeId = parseInt(nodeEl.dataset.id);
+
+    // Port click — start connection (any port allowed)
+    if(e.target.classList.contains('port')){
+      connectingFrom = { nodeId, side: e.target.dataset.side || 'right' };
+      isConnecting = true;
+      e.target.classList.add('active');
+      e.stopPropagation();
+      document.getElementById('canvasContainer').classList.add('connecting');
+      return;
+    }
+
+    // Delete button
+    if(e.target.classList.contains('delete-btn')){
+      deleteNode(nodeId);
+      return;
+    }
+
+    selectNode(nodeId);
+
+    // Start dragging node
+    const node = nodes.find(n => n.id === nodeId);
+    if(node){
+      dragNode = node;
+      const pos = getCanvasPos(e);
+      dragOffset = { x: pos.x - node.x, y: pos.y - node.y };
+      document.getElementById('canvasContainer').classList.add('grabbing');
+    }
+    return;
+  }
+
+  // Background click — pan or deselect
+  if(e.button === 0){
+    if(e.target.closest('.connections-svg') || e.target.closest('.canvas-grid') || e.target.closest('.canvas-container') === e.currentTarget){
+      if(!e.target.closest('.node')){
+        deselectAll();
+        isPanning = true;
+        panStart = { x: e.clientX - panX, y: e.clientY - panY };
+        document.getElementById('canvasContainer').classList.add('grabbing');
+      }
+    }
+  }
+}
+
+function onMouseMove(e){
+  if(dragNode){
+    const pos = getCanvasPos(e);
+    dragNode.x = pos.x - dragOffset.x;
+    dragNode.y = pos.y - dragOffset.y;
+    renderNode(dragNode);
+    renderConnections();
+    updateMinimap();
+  }
+  if(isPanning){
+    panX = e.clientX - panStart.x;
+    panY = e.clientY - panStart.y;
+    updateCanvasTransform();
+    updateMinimap();
+  }
+  if(isConnecting && connectingFrom !== null){
+    renderTempConnection(e);
+  }
+}
+
+function onMouseUp(e){
+  if(dragNode){
+    dragNode = null;
+    document.getElementById('canvasContainer').classList.remove('grabbing');
+    saveToLocalStorage();
+  }
+  if(isPanning){
+    isPanning = false;
+    document.getElementById('canvasContainer').classList.remove('grabbing');
+  }
+  if(isConnecting){
+    const port = e.target.closest('.port');
+    if(port){
+      const toId = parseInt(port.closest('.node').dataset.id);
+      const fromInfo = (typeof connectingFrom === 'object') ? connectingFrom : { nodeId: connectingFrom };
+      const toSide = port.dataset.side || 'left';
+      if(toId !== fromInfo.nodeId){
+        const existing = connections.some(c =>
+          (c.from === fromInfo.nodeId && c.to === toId) ||
+          (c.from === toId && c.to === fromInfo.nodeId)
+        );
+        if(!existing){
+          pushUndo();
+          connections.push({
+            from: fromInfo.nodeId,
+            to: toId,
+            fromSide: fromInfo.side || 'right',
+            toSide
+          });
+          renderConnections();
+          updateSummary();
+          saveToLocalStorage();
+        }
+      }
+    }
+    const fromPort = document.querySelector(`.port.active[data-node-id="${(typeof connectingFrom === 'object') ? connectingFrom.nodeId : connectingFrom}"]`);
+    if(fromPort) fromPort.classList.remove('active');
+    isConnecting = false;
+    connectingFrom = null;
+    document.getElementById('canvasContainer').classList.remove('connecting');
+    removeTempLine();
+  }
+}
+
+function onWheel(e){
+  e.preventDefault();
+  const container = document.getElementById('canvasContainer');
+  const rect = container.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const oldScale = scale;
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  scale = Math.min(2, Math.max(0.2, scale * delta));
+
+  // Zoom-to-cursor: keep world point under cursor fixed on screen
+  panX = mx - (mx - panX) * (scale / oldScale);
+  panY = my - (my - panY) * (scale / oldScale);
+
+  updateCanvasTransform();
+  document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
+  renderConnections();
+  updateMinimap();
+}
+
+// Minimap click-to-pan
+function setupMinimapEvents(){
+  const mm = document.getElementById('minimap');
+  mm.addEventListener('mousedown', (e) => {
+    if(e.target.classList.contains('minimap-viewport') || e.target.classList.contains('minimap-node')) return;
+    e.stopPropagation();
+    const rect = mm.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    if(nodes.length === 0) return;
+
+    const padding = 100;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    nodes.forEach(n => {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + 200);
+      maxY = Math.max(maxY, n.y + 80);
+    });
+
+    const rangeX = maxX - minX + padding * 2 || 1;
+    const rangeY = maxY - minY + padding * 2 || 1;
+    const mmW = 160, mmH = 110;
+    const scaleX = mmW / rangeX;
+    const scaleY = mmH / rangeY;
+    const s = Math.min(scaleX, scaleY);
+
+    const worldX = (mx / s) + minX - padding;
+    const worldY = (my / s) + minY - padding;
+
+    const container = document.getElementById('canvasContainer');
+    const cvRect = container.getBoundingClientRect();
+    const centerX = cvRect.width / 2;
+    const centerY = cvRect.height / 2;
+
+    panX = centerX - worldX * scale;
+    panY = centerY - worldY * scale;
+
+    updateCanvasTransform();
+    renderConnections();
+    updateMinimap();
+  });
+}
+
+function updateCanvasTransform(){
+  const canvas = document.getElementById('canvas');
+  canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+
+// ═══════════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════════
+function onContextMenu(e){
+  e.preventDefault();
+  const nodeEl = e.target.closest('.node');
+  if(nodeEl){
+    const id = parseInt(nodeEl.dataset.id);
+    selectNode(id);
+    showContextMenu(e.clientX, e.clientY);
+  }
+}
+function showContextMenu(x, y){
+  const m = document.getElementById('ctxMenu');
+  m.style.left = x + 'px'; m.style.top = y + 'px';
+  m.classList.add('show');
+}
+function hideContextMenu(){ document.getElementById('ctxMenu').classList.remove('show'); }
+
+function closeTopbarOverflow(){
+  const menu = document.getElementById('topbarOverflowMenu');
+  const btn = document.getElementById('topbarOverflowBtn');
+  menu.classList.remove('show');
+  btn.setAttribute('aria-expanded', 'false');
+}
+
+function onKeyDown(e){
+  const inInput = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
+
+  if(e.key === 'Delete' || e.key === 'Backspace'){
+    if(inInput) return;
+    if(selectedNodeId !== null) deleteNode(selectedNodeId);
+  }
+
+  // Undo (Ctrl+Z / Cmd+Z)
+  if((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey){
+    e.preventDefault();
+    undo();
+    return;
+  }
+
+  // Redo (Ctrl+Shift+Z / Cmd+Shift+Z or Ctrl+Y)
+  if(((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
+     ((e.ctrlKey || e.metaKey) && e.key === 'y')){
+    e.preventDefault();
+    redo();
+    return;
+  }
+
+  // Duplicate (Ctrl+D / Cmd+D)
+  if((e.ctrlKey || e.metaKey) && e.key === 'd' && !inInput){
+    e.preventDefault();
+    duplicateNode();
+    return;
+  }
+
+  // Copy (Ctrl+C / Cmd+C)
+  if((e.ctrlKey || e.metaKey) && e.key === 'c' && !inInput && selectedNodeId !== null){
+    const node = nodes.find(n => n.id === selectedNodeId);
+    if(node){
+      e.preventDefault();
+      clipboardNode = JSON.parse(JSON.stringify(node));
+    }
+    return;
+  }
+
+  // Paste (Ctrl+V / Cmd+V)
+  if((e.ctrlKey || e.metaKey) && e.key === 'v' && !inInput && clipboardNode){
+    e.preventDefault();
+    const src = clipboardNode;
+    const node = addNode(src.type, src.x + 30, src.y + 30);
+    if(node){
+      node.name = src.name + ' (copy)';
+      node.settings = JSON.parse(JSON.stringify(src.settings));
+      renderNode(node);
+      saveToLocalStorage();
+    }
+    return;
+  }
+
+  if(e.key === 'Escape'){
+    deselectAll();
+    hideContextMenu();
+    removeTempLine();
+    closeTopbarOverflow();
+    if(isConnecting){
+      isConnecting = false;
+      connectingFrom = null;
+      document.getElementById('canvasContainer').classList.remove('connecting');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// NODE OPERATIONS
+// ═══════════════════════════════════════════
+function resolveType(type){
+  if(NODE_TYPES[type]) return NODE_TYPES[type];
+  if(type && type.startsWith('custom_')){
+    const key = type.slice(7);
+    if(CUSTOM_TYPES[key]) return CUSTOM_TYPES[key];
+  }
+  return null;
+}
+
+function addNode(type, x, y){
+  pushUndo();
+  const def = resolveType(type);
+  if(!def) return null;
+  const node = {
+    id: nextId++,
+    type,
+    x, y,
+    name: def.label,
+    settings: { name: def.label }
+  };
+
+  // Defaults per type (AI workflow)
+  if(type === 'ai_prompt') { node.settings.model = 'gpt-4'; node.settings.prompt = ''; node.settings.temperature = 0.7; }
+  if(type === 'delay') { node.settings.duration = 5; node.settings.unit = 'seconds'; }
+  if(type === 'condition') { node.settings.expression = ''; node.settings.if_true = 'Continue'; node.settings.if_false = 'Skip'; }
+  if(type === 'trigger') { node.settings.event = 'webhook'; node.settings.source = ''; }
+  if(type === 'email') { node.settings.to = ''; node.settings.subject = ''; node.settings.body = ''; }
+  if(type === 'webhook') { node.settings.method = 'POST'; node.settings.url = ''; node.settings.headers = ''; }
+  if(type === 'schedule') { node.settings.cron = '0 0 * * *'; node.settings.tz = 'UTC'; }
+  if(type === 'code') { node.settings.language = 'JavaScript'; node.settings.script = ''; }
+  if(type === 'transform') { node.settings.mapping = ''; }
+  if(type === 'aggregate') { node.settings.strategy = 'Merge'; node.settings.timeout = '30s'; }
+  if(type === 'error_handler') { node.settings.strategy = 'Retry'; node.settings.retry = '3'; }
+  if(type === 'notify') { node.settings.channel = ''; node.settings.message = ''; }
+  if(type === 'llm_chain') { node.settings.steps = 'Step1, Step2'; node.settings.model = 'gpt-4'; }
+  if(type === 'tool_use') { node.settings.tools = ''; node.settings.mode = 'auto'; }
+  if(type === 'guardrail') { node.settings.rules = ''; node.settings.action = 'block'; }
+  if(type === 'memory') { node.settings.type = 'conversation'; node.settings.ttl = '1h'; }
+  if(type === 'file_op') { node.settings.operation = 'upload'; node.settings.path = ''; }
+  if(type === 'http_request') { node.settings.method = 'GET'; node.settings.url = ''; node.settings.auth = 'none'; }
+  if(type === 'human_in_loop') { node.settings.assignee = ''; node.settings.timeout = '24h'; }
+
+  // Defaults per type (IT architecture)
+  if(type === 'db') { node.settings.engine = 'PostgreSQL'; node.settings.version = '16'; node.settings.region = 'us-east-1'; }
+  if(type === 'app') { node.settings.language = 'TypeScript'; node.settings.framework = 'Fastify'; node.settings.port = '8080'; }
+  if(type === 'web') { node.settings.type = 'Nginx'; node.settings.domain = ''; }
+  if(type === 'proxy') { node.settings.type = 'API Gateway'; node.settings.auth = 'JWT'; }
+  if(type === 'cache') { node.settings.engine = 'Redis'; node.settings.ttl = '600'; }
+  if(type === 'queue') { node.settings.type = 'RabbitMQ'; node.settings.durability = 'Durable'; }
+  if(type === 'storage') { node.settings.provider = 'S3'; node.settings.region = 'us-east-1'; }
+  if(type === 'auth') { node.settings.provider = 'Auth0'; node.settings.mode = 'OIDC'; }
+  if(type === 'monitor') { node.settings.tools = 'Prometheus, Grafana'; node.settings.level = 'Info'; }
+  if(type === 'cdn') { node.settings.provider = 'Cloudflare'; node.settings.region = 'Global'; }
+  if(type === 'search') { node.settings.engine = 'Elasticsearch'; node.settings.index = ''; }
+  if(type === 'worker') { node.settings.concurrency = '4'; node.settings.queue = 'default'; }
+  if(type === 'service_mesh') { node.settings.mesh = 'Istio'; node.settings.mtls = 'STRICT'; }
+  if(type === 'vault') { node.settings.provider = 'HashiCorp Vault'; node.settings.mode = 'KV'; }
+  if(type === 'rabbitmq') { node.settings.vhost = '/'; node.settings.durable = 'true'; }
+  if(type === 'kafka') { node.settings.topics = 'events'; node.settings.replication = '3'; }
+  if(type === 'pulsar') { node.settings.tenant = 'default'; node.settings.namespace = 'default'; }
+  if(type === 'sqs') { node.settings.type = 'Standard'; node.settings.visibility = '30'; }
+  if(type === 'sns') { node.settings.protocol = 'https'; node.settings.endpoints = ''; }
+  if(type === 'nats') { node.settings.mode = 'cluster'; node.settings.auth = 'token'; }
+  if(type === 'amqp') { node.settings.version = '0-9-1'; node.settings.durable = 'true'; }
+  if(type === 'k8s_deployment') { node.settings.replicas = '3'; node.settings.image = ''; }
+  if(type === 'k8s_statefulset') { node.settings.replicas = '3'; node.settings.storageClass = 'standard'; }
+  if(type === 'k8s_daemonset') { node.settings.selector = 'node-role.kubernetes.io/worker'; node.settings.priority = 'high'; }
+  if(type === 'k8s_cronjob') { node.settings.schedule = '0 */5 * * *'; node.settings.image = ''; }
+  if(type === 'k8s_job') { node.settings.completions = '1'; node.settings.image = ''; }
+  if(type === 'k8s_service') { node.settings.type = 'ClusterIP'; node.settings.port = '80'; }
+  if(type === 'k8s_hpa') { node.settings.minReplicas = '2'; node.settings.maxReplicas = '10'; }
+  if(type === 'k8s_pvc') { node.settings.storageClass = 'standard'; node.settings.size = '10Gi'; }
+  if(type === 'k8s_configmap') { node.settings.namespace = 'default'; node.settings.source = 'inline'; }
+  if(type === 'k8s_secret') { node.settings.type = 'Opaque'; node.settings.namespace = 'default'; }
+  if(type === 'k8s_ingress') { node.settings.host = ''; node.settings.tls = 'true'; }
+  if(type === 'firewall') { node.settings.mode = 'strict'; node.settings.policy = 'deny-all'; }
+  if(type === 'vpn') { node.settings.protocol = 'IPsec'; node.settings.region = 'global'; }
+  if(type === 'lb') { node.settings.algorithm = 'round-robin'; node.settings.healthCheck = '/health'; }
+  if(type === 'tls_terminator') { node.settings.certManager = 'cert-manager'; node.settings.mode = 'mTLS'; }
+  if(type === 'waf') { node.settings.provider = 'Cloudflare'; node.settings.mode = 'protect'; }
+  if(type === 'ci') { node.settings.provider = 'GitHub Actions'; node.settings.branch = 'main'; }
+  if(type === 'cd') { node.settings.provider = 'ArgoCD'; node.settings.env = 'production'; }
+  if(type === 'registry') { node.settings.provider = 'Docker Hub'; node.settings.scope = 'private'; }
+  if(type === 'infra_as_code') { node.settings.tool = 'Terraform'; node.settings.state = 'remote'; }
+  if(type === 'git') { node.settings.provider = 'GitHub'; node.settings.branch = 'main'; }
+  nodes.push(node);
+  renderNode(node);
+  selectNode(node.id);
+  updateSummary();
+  saveToLocalStorage();
+  return node;
+}
+
+function deleteNode(id){
+  pushUndo();
+  nodes = nodes.filter(n => n.id !== id);
+  connections = connections.filter(c => c.from !== id && c.to !== id);
+  if(selectedNodeId === id){ selectedNodeId = null; updatePropsPanel(); }
+  const el = document.querySelector(`.node[data-id="${id}"]`);
+  if(el){ el.style.opacity = '0'; el.style.transform = 'scale(.9)'; setTimeout(() => el.remove(), 200); }
+  renderConnections();
+  updateSummary();
+  updateMinimap();
+  saveToLocalStorage();
+}
+
+function duplicateNode(){
+  if(!selectedNodeId) return;
+  pushUndo();
+  const orig = nodes.find(n => n.id === selectedNodeId);
+  if(!orig) return;
+  const node = addNode(orig.type, orig.x + 40, orig.y + 40);
+  node.name = orig.name + ' (copy)';
+  node.settings = { ...orig.settings };
+  renderNode(node);
+  saveToLocalStorage();
+}
+
+function renamePrompt(){
+  if(!selectedNodeId) return;
+  const node = nodes.find(n => n.id === selectedNodeId);
+  if(!node) return;
+  showModal('Rename Node', 'Enter a new name for this node.', node.name, (val) => {
+    node.name = val || node.name;
+    node.settings.name = val || node.name;
+    renderNode(node);
+    updatePropsPanel();
+    saveToLocalStorage();
+  });
+}
+
+function selectNode(id){
+  selectedNodeId = id;
+  document.querySelectorAll('.node').forEach(el => el.classList.remove('selected'));
+  const el = document.querySelector(`.node[data-id="${id}"]`);
+  if(el) el.classList.add('selected');
+  updatePropsPanel();
+}
+
+function deselectAll(){
+  selectedNodeId = null;
+  selectedConnIdx = null;
+  document.querySelectorAll('.node').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.conn-x-btn').forEach(el => el.remove());
+  updatePropsPanel();
+}
+
+// ═══════════════════════════════════════════
+// RENDER NODE
+// ═══════════════════════════════════════════
+function renderNode(node){
+  let el = document.querySelector(`.node[data-id="${node.id}"]`);
+  const def = resolveType(node.type);
+  if(!def) return;
+  if(!el){
+    el = document.createElement('div');
+    el.className = 'node';
+    el.dataset.id = node.id;
+    el.innerHTML = `
+      <button class="delete-btn" title="Delete node">✕</button>
+      <div class="node-header" style="border-bottom:2px solid ${def.color}44">
+        <div class="n-icon" style="background:${def.color}22;color:${def.color}">${def.icon}</div>
+        <div class="n-title" title="${node.name}">${node.name}</div>
+      </div>
+      <div class="node-body">
+        <div class="n-desc">${def.desc}</div>
+        <span class="n-tag">${def.label}</span>
+      </div>
+      <div class="port port-top" data-node-id="${node.id}" data-side="top" title="Port (top)"></div>
+      <div class="port port-bottom" data-node-id="${node.id}" data-side="bottom" title="Port (bottom)"></div>
+      <div class="port port-left" data-node-id="${node.id}" data-side="left" title="Port (left)"></div>
+      <div class="port port-right" data-node-id="${node.id}" data-side="right" title="Port (right)"></div>
+    `;
+    document.getElementById('canvas').appendChild(el);
+  }
+  el.style.left = node.x + 'px';
+  el.style.top = node.y + 'px';
+  el.querySelector('.n-title').textContent = node.name;
+  return el;
+}
+
+// ═══════════════════════════════════════════
+// CONNECTIONS
+// ═══════════════════════════════════════════
+function renderConnections(){
+  const svg = document.getElementById('connectionsSvg');
+  // Clear all previous content including defs
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+  // Single shared defs
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const marker = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  marker.setAttribute('id','arrow');
+  marker.setAttribute('markerWidth','10');
+  marker.setAttribute('markerHeight','7');
+  marker.setAttribute('refX','11');
+  marker.setAttribute('refY','3.5');
+  marker.setAttribute('orient','auto');
+  const polygon = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  polygon.setAttribute('points','0 0, 10 3.5, 0 7');
+  polygon.setAttribute('fill','var(--text-muted)');
+  marker.appendChild(polygon);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  // Remove old X buttons
+  document.querySelectorAll('.conn-x-btn').forEach(el => el.remove());
+
+  connections.forEach((conn, i) => {
+    const fromEl = document.querySelector(`.node[data-id="${conn.from}"]`);
+    const toEl = document.querySelector(`.node[data-id="${conn.to}"]`);
+    if(!fromEl || !toEl) return;
+
+    const fromSide = conn.fromSide || 'right';
+    const toSide = conn.toSide || 'left';
+    const fromRect = getPortRect(fromEl, fromSide);
+    const toRect = getPortRect(toEl, toSide);
+
+    const mx = (fromRect.x + toRect.x) / 2;
+    const dy = Math.max(30, Math.abs(toRect.y - fromRect.y) * 0.4);
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d = `M ${fromRect.x} ${fromRect.y} C ${mx} ${fromRect.y + dy}, ${mx} ${toRect.y - dy}, ${toRect.x} ${toRect.y}`;
+    path.setAttribute('d', d);
+    path.setAttribute('data-conn-idx', i);
+    path.setAttribute('marker-end', 'url(#arrow)');
+
+    if(selectedNodeId && (conn.from === selectedNodeId || conn.to === selectedNodeId)){
+      path.classList.add('active');
+    }
+
+    // Left-click: select connection and show X button at midpoint
+    path.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedConnIdx = (selectedConnIdx === i) ? null : i;
+      renderConnections();
+    });
+
+    path.title = 'Click to select connection';
+
+    svg.appendChild(path);
+
+    // If this connection is selected, show X button at midpoint
+    if(selectedConnIdx === i){
+      const midX = mx;
+      const midY = (fromRect.y + toRect.y) / 2;
+      showConnXButton(midX, midY, i);
+    }
+  });
+}
+
+function showConnXButton(canvasX, canvasY, connIdx){
+  // Remove existing
+  document.querySelectorAll('.conn-x-btn').forEach(el => el.remove());
+
+  const btn = document.createElement('button');
+  btn.className = 'conn-x-btn';
+  btn.textContent = '✕';
+  btn.setAttribute('aria-label', 'Remove connection');
+  btn.setAttribute('data-conn-idx', connIdx);
+
+  // Transform canvas coords to screen coords
+  const rect = document.getElementById('canvasContainer').getBoundingClientRect();
+  const screenX = rect.left + canvasX * scale + panX;
+  const screenY = rect.top + canvasY * scale + panY;
+
+  btn.style.position = 'fixed';
+  btn.style.left = (screenX - 10) + 'px';
+  btn.style.top = (screenY - 10) + 'px';
+  btn.style.zIndex = '150';
+  btn.style.width = '22px';
+  btn.style.height = '22px';
+  btn.style.borderRadius = '999px';
+  btn.style.border = '1px solid var(--border)';
+  btn.style.background = 'var(--bg-card)';
+  btn.style.color = 'var(--red)';
+  btn.style.fontSize = '12px';
+  btn.style.cursor = 'pointer';
+  btn.style.display = 'inline-flex';
+  btn.style.alignItems = 'center';
+  btn.style.justifyContent = 'center';
+  btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.35)';
+  btn.style.transition = 'background .15s,color .15s';
+
+  btn.addEventListener('mouseenter', () => {
+    btn.style.background = 'var(--red)';
+    btn.style.color = '#fff';
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.background = 'var(--bg-card)';
+    btn.style.color = 'var(--red)';
+  });
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const idx = parseInt(btn.dataset.connIdx);
+    if(!isNaN(idx) && idx < connections.length){
+      pushUndo();
+      connections.splice(idx, 1);
+      selectedConnIdx = null;
+      renderConnections();
+      updateSummary();
+      saveToLocalStorage();
+    }
+  });
+
+  document.body.appendChild(btn);
+}
+
+function getPortRect(el, side){
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  const x = el.offsetLeft;
+  const y = el.offsetTop;
+  if(side === 'top')    return { x: x + w / 2, y: y };
+  if(side === 'bottom') return { x: x + w / 2, y: y + h };
+  if(side === 'left')   return { x: x, y: y + h / 2 };
+  return                 { x: x + w, y: y + h / 2 };
+}
+
+function renderTempConnection(e){
+  removeTempLine();
+  const fromInfo = (typeof connectingFrom === 'object') ? connectingFrom : { nodeId: connectingFrom, side: 'right' };
+  const fromNode = nodes.find(n => n.id === fromInfo.nodeId);
+  if(!fromNode) return;
+  const fromEl = document.querySelector(`.node[data-id="${fromInfo.nodeId}"]`);
+  if(!fromEl) return;
+
+  const svg = document.getElementById('connectionsSvg');
+  const rect = document.getElementById('canvasContainer').getBoundingClientRect();
+
+  const p = getPortRect(fromEl, fromInfo.side || 'right');
+  const mx = (e.clientX - rect.left - panX) / scale;
+  const my = (e.clientY - rect.top - panY) / scale;
+
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1', p.x);
+  line.setAttribute('y1', p.y);
+  line.setAttribute('x2', mx);
+  line.setAttribute('y2', my);
+  line.classList.add('temp-line');
+  svg.appendChild(line);
+}
+function removeTempLine(){
+  document.querySelectorAll('.temp-line').forEach(el => el.remove());
+}
+
+// ═══════════════════════════════════════════
+// PROPERTIES PANEL
+// ═══════════════════════════════════════════
+function updatePropsPanel(){
+  const panel = document.getElementById('propsPanel');
+  if(!selectedNodeId){
+    panel.innerHTML = '<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg><p>Select a node to<br>edit its properties</p></div>';
+    return;
+  }
+  const node = nodes.find(n => n.id === selectedNodeId);
+  if(!node) return;
+  const def = resolveType(node.type);
+  if(!def){
+    panel.innerHTML = '<div class="empty-state"><p>Unknown node type.</p></div>';
+    return;
+  }
+
+  let html = `
+    <div class="props-header"><h3>${def.icon} ${def.label}</h3><button class="props-close" onclick="deselectAll()">✕</button></div>
+    <div class="prop-section">
+      <h4>Details</h4>
+      <div class="prop-row"><label>Name</label><input type="text" value="${escHtml(node.name)}" onchange="updateNodeProp(${node.id},'name',this.value)"></div>
+      <div class="prop-row"><label>Type</label><select disabled><option>${def.label}</option></select></div>
+    </div>
+    <div class="prop-section"><h4>Settings</h4>`;
+
+  for(const prop of def.props){
+    const val = node.settings[prop] ?? '';
+    if(prop === 'body' || prop === 'script' || prop === 'query'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><textarea onchange="updateNodeProp(${node.id},'${prop}',this.value)">${escHtml(String(val))}</textarea></div>`;
+    } else if(prop === 'method' || prop === 'unit' || prop === 'model'){
+      const opts = prop === 'method' ? 'GET,POST,PUT,DELETE' : prop === 'unit' ? 'seconds,minutes,hours,days' : 'gpt-4,gpt-3.5,gemini-2.5,llama-3';
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)">${opts.split(',').map(o=>`<option${String(val)===o?' selected':''}>${o}</option>`).join('')}</select></div>`;
+    } else if(prop === 'temperature'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><input type="range" min="0" max="2" step="0.1" value="${val||0.7}" oninput="this.nextElementSibling.textContent=this.value;updateNodeProp(${node.id},'${prop}',parseFloat(this.value))"><span style="font-size:12px;color:var(--text-secondary)">${val||0.7}</span></div>`;
+    } else if(prop === 'duration'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><input type="number" min="0" value="${val||1}" onchange="updateNodeProp(${node.id},'${prop}',parseInt(this.value)||0)"></div>`;
+    } else if(prop === 'engine'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='PostgreSQL'?' selected':''}>PostgreSQL</option><option${val==='MySQL'?' selected':''}>MySQL</option><option${val==='MongoDB'?' selected':''}>MongoDB</option><option${val==='Redis'?' selected':''}>Redis</option><option${val==='Cassandra'?' selected':''}>Cassandra</option></select></div>`;
+    } else if(prop === 'language'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='TypeScript'?' selected':''}>TypeScript</option><option${val==='Python'?' selected':''}>Python</option><option${val==='Go'?' selected':''}>Go</option><option${val==='Java'?' selected':''}>Java</option><option${val==='Node.js'?' selected':''}>Node.js</option><option${val==='C#'?' selected':''}>C#</option></select></div>`;
+    } else if(prop === 'type' && (node.type === 'web' || node.type === 'proxy')){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='Nginx'?' selected':''}>Nginx</option><option${val==='HAProxy'?' selected':''}>HAProxy</option><option${val==='API Gateway'?' selected':''}>API Gateway</option><option${val==='Cloudflare'?' selected':''}>Cloudflare</option></select></div>`;
+    } else if(prop === 'type' && node.type === 'queue'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='RabbitMQ'?' selected':''}>RabbitMQ</option><option${val==='Kafka'?' selected':''}>Kafka</option><option${val==='SQS'?' selected':''}>SQS</option><option${val==='Redis Streams'?' selected':''}>Redis Streams</option></select></div>`;
+    } else if(prop === 'provider'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='S3'?' selected':''}>S3</option><option${val==='GCS'?' selected':''}>GCS</option><option${val==='Azure Blob'?' selected':''}>Azure Blob</option><option${val==='Auth0'?' selected':''}>Auth0</option><option${val==='Keycloak'?' selected':''}>Keycloak</option></select></div>`;
+    } else if(prop === 'mode'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='OIDC'?' selected':''}>OIDC</option><option${val==='SAML'?' selected':''}>SAML</option><option${val==='JWT'?' selected':''}>JWT</option></select></div>`;
+    } else if(prop === 'level'){
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><select onchange="updateNodeProp(${node.id},'${prop}',this.value)"><option${val==='Info'?' selected':''}>Info</option><option${val==='Debug'?' selected':''}>Debug</option><option${val==='Error'?' selected':''}>Error</option></select></div>`;
+    } else {
+      html += `<div class="prop-row"><label>${prop.charAt(0).toUpperCase()+prop.slice(1)}</label><input type="text" value="${escHtml(String(val))}" onchange="updateNodeProp(${node.id},'${prop}',this.value)"></div>`;
+    }
+  }
+
+  html += `</div>
+    <div class="prop-section">
+      <h4>Actions</h4>
+      <button class="btn btn-primary btn-block btn-sm" onclick="duplicateNode()">⧉ Duplicate Node</button>
+      <button class="btn btn-danger btn-block btn-sm" onclick="deleteNode(${node.id})">✕ Delete Node</button>
+    </div>`;
+
+  panel.innerHTML = html;
+}
+
+function updateNodeProp(nodeId, prop, value){
+  const node = nodes.find(n => n.id === nodeId);
+  if(!node) return;
+  node.settings[prop] = value;
+  if(prop === 'name'){
+    node.name = value;
+    renderNode(node);
+  }
+  updateSummary();
+  saveToLocalStorage();
+}
+
+// ═══════════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════════
+function updateSummary(){
+  document.getElementById('sumNodes').textContent = nodes.length;
+  document.getElementById('sumConnections').textContent = connections.length;
+  const types = new Set(nodes.map(n => n.type));
+  document.getElementById('sumTypes').textContent = types.size;
+
+  // Estimate duration from delay nodes
+  let totalSec = 0;
+  nodes.filter(n => n.type === 'delay').forEach(n => {
+    const dur = n.settings.duration || 0;
+    const unit = n.settings.unit || 'seconds';
+    const mult = {seconds:1, minutes:60, hours:3600, days:86400}[unit] || 1;
+    totalSec += dur * mult;
+  });
+
+  if(totalSec === 0) {
+    document.getElementById('sumDuration').textContent = '—';
+  } else if(totalSec < 60) {
+    document.getElementById('sumDuration').textContent = totalSec + 's';
+  } else if(totalSec < 3600) {
+    document.getElementById('sumDuration').textContent = Math.floor(totalSec/60) + 'm';
+  } else {
+    document.getElementById('sumDuration').textContent = Math.floor(totalSec/3600) + 'h ' + Math.floor((totalSec%3600)/60) + 'm';
+  }
+}
+
+// ═══════════════════════════════════════════
+// MINIMAP
+// ═══════════════════════════════════════════
+function updateMinimap(){
+  const mm = document.getElementById('minimap');
+  if(nodes.length === 0){ mm.innerHTML = ''; return; }
+
+  const padding = 100;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  nodes.forEach(n => {
+    minX = Math.min(minX, n.x);
+    minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + 200);
+    maxY = Math.max(maxY, n.y + 80);
+  });
+
+  const rangeX = maxX - minX + padding * 2 || 1;
+  const rangeY = maxY - minY + padding * 2 || 1;
+  const mmW = 160, mmH = 110;
+  const scaleX = mmW / rangeX;
+  const scaleY = mmH / rangeY;
+  const s = Math.min(scaleX, scaleY);
+
+  let html = '';
+  nodes.forEach(n => {
+    const mx = (n.x - minX + padding) * s;
+    const my = (n.y - minY + padding) * s;
+    const def = resolveType(n.type);
+    const bg = def ? def.color + '88' : 'var(--text-muted)';
+    html += `<div class="minimap-node" style="left:${mx}px;top:${my}px;width:${4*s}px;height:${6*s}px;background:${bg}"></div>`;
+  });
+
+  // Viewport indicator
+  const cv = document.getElementById('canvasContainer');
+  const vpX = (-panX / scale - minX + padding) * s;
+  const vpY = (-panY / scale - minY + padding) * s;
+  const vpW = (cv.clientWidth / scale) * s;
+  const vpH = (cv.clientHeight / scale) * s;
+  html += `<div class="minimap-viewport" style="left:${vpX}px;top:${vpY}px;width:${vpW}px;height:${vpH}px"></div>`;
+
+  mm.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// ZOOM
+// ═══════════════════════════════════════════
+function zoomIn(){ scale = Math.min(2, scale * 1.15); updateCanvasTransform(); document.getElementById('zoomLevel').textContent = Math.round(scale*100)+'%'; renderConnections(); updateMinimap(); }
+function zoomOut(){ scale = Math.max(0.2, scale / 1.15); updateCanvasTransform(); document.getElementById('zoomLevel').textContent = Math.round(scale*100)+'%'; renderConnections(); updateMinimap(); }
+function resetZoom(){ scale = 1; panX = 0; panY = 0; updateCanvasTransform(); document.getElementById('zoomLevel').textContent = '100%'; renderConnections(); updateMinimap(); }
+
+// ═══════════════════════════════════════════
+// SAMPLE WORKFLOW
+// ═══════════════════════════════════════════
+function loadSampleWorkflow(){
+  nodes = [
+    {
+      "id": 8,
+      "type": "web",
+      "x": 360,
+      "y": 174,
+      "name": "GateWay",
+      "settings": {
+        "name": "GateWay",
+        "type": "API Gateway",
+        "domain": ""
+      }
+    },
+    {
+      "id": 10,
+      "type": "app",
+      "x": 358,
+      "y": 311,
+      "name": "Application",
+      "settings": {
+        "name": "Application",
+        "language": "TypeScript",
+        "framework": "Fastify",
+        "port": "8080"
+      }
+    },
+    {
+      "id": 12,
+      "type": "storage",
+      "x": 647,
+      "y": 309,
+      "name": "Object Storage",
+      "settings": {
+        "name": "Object Storage",
+        "provider": "S3",
+        "region": "us-east-1"
+      }
+    },
+    {
+      "id": 13,
+      "type": "auth",
+      "x": 68,
+      "y": 308,
+      "name": "Auth Service",
+      "settings": {
+        "name": "Auth Service",
+        "provider": "Auth0",
+        "mode": "OIDC"
+      }
+    },
+    {
+      "id": 14,
+      "type": "waf",
+      "x": 359,
+      "y": 36,
+      "name": "WAF",
+      "settings": {
+        "name": "WAF",
+        "provider": "Cloudflare",
+        "mode": "protect"
+      }
+    },
+    {
+      "id": 15,
+      "type": "cache",
+      "x": 508,
+      "y": 460,
+      "name": "Cache",
+      "settings": {
+        "name": "Cache",
+        "engine": "Redis",
+        "ttl": "600"
+      }
+    },
+    {
+      "id": 16,
+      "type": "db",
+      "x": 224,
+      "y": 458,
+      "name": "Database",
+      "settings": {
+        "name": "Database",
+        "engine": "PostgreSQL",
+        "version": "16",
+        "region": "us-east-1"
+      }
+    },
+    {
+      "id": 20,
+      "type": "trigger",
+      "x": 60,
+      "y": 30,
+      "name": "Trigger",
+      "settings": {
+        "name": "Trigger",
+        "event": "webhook",
+        "source": ""
+      }
+    }
+  ];
+
+  connections = [
+    {
+      "from": 10,
+      "to": 12,
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": 10,
+      "to": 13,
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "from": 8,
+      "to": 10,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": 14,
+      "to": 8,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": 10,
+      "to": 16,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": 10,
+      "to": 15,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": 20,
+      "to": 14,
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ];
+
+  nextId = 21;
+
+  nodes.forEach(n => renderNode(n));
+  renderConnections();
+  updateSummary();
+  updateMinimap();
+  saveToLocalStorage();
+}
+
+// ═══════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════
+function deleteSelected(){
+  if(selectedNodeId !== null) deleteNode(selectedNodeId);
+}
+
+function clearAll(){
+  if(nodes.length === 0) return;
+  document.querySelectorAll('.node').forEach(el => el.remove());
+  document.getElementById('connectionsSvg').querySelectorAll('path, marker, defs').forEach(el => el.remove());
+  nodes = []; connections = []; selectedNodeId = null;
+  updatePropsPanel(); updateSummary(); updateMinimap();
+  saveToLocalStorage();
+}
+
+function toggleSummary(){
+  const bar = document.getElementById('summaryBar');
+  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+}
+
+function clearCache(){
+  if(!confirm('Clear all cached data (workflow, custom components, group states)?\nThis cannot be undone.')) return;
+  localStorage.removeItem(LS_WORKFLOW_KEY);
+  localStorage.removeItem(LS_CUSTOM_KEY);
+  localStorage.removeItem(LS_PALETTE_GROUPS_KEY);
+  location.reload();
+}
+
+function runWorkflow(){
+  if(nodes.length === 0){
+    alert('No nodes to run. Add some nodes first!');
+    return;
+  }
+  // Animate: highlight nodes in sequence
+  const container = document.getElementById('canvasContainer');
+  container.classList.add('running');
+  const triggerNodes = nodes.filter(n => n.type === 'trigger');
+  const queue = [...triggerNodes];
+  const visited = new Set();
+
+  function processNext(){
+    if(queue.length === 0){
+      setTimeout(() => container.classList.remove('running'), 500);
+      return;
+    }
+    const node = queue.shift();
+    if(visited.has(node.id)) { processNext(); return; }
+    visited.add(node.id);
+    const el = document.querySelector(`.node[data-id="${node.id}"]`);
+    if(el){
+      el.style.boxShadow = '0 0 0 4px var(--green), 0 0 20px rgba(52,211,153,.3)';
+      setTimeout(() => {
+        el.style.boxShadow = '';
+        const outs = connections.filter(c => c.from === node.id);
+        outs.forEach(c => {
+          if(!visited.has(c.to)) queue.push(nodes.find(n => n.id === c.to));
+        });
+        processNext();
+      }, 600);
+    }
+  }
+  processNext();
+}
+
+// ═══════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════
+function showModal(title, desc, defaultVal, onConfirm){
+  const overlay = document.getElementById('modalOverlay');
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <h3>${title}</h3><p>${desc}</p>
+    <input type="text" id="modalInput" value="${escHtml(defaultVal)}" style="width:100%;padding:8px 10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;margin-bottom:16px;outline:none;font-family:inherit">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="modalConfirm">Confirm</button>
+    </div>
+  `;
+  overlay.classList.add('show');
+  const input = document.getElementById('modalInput');
+  input.focus();
+  input.select();
+  const doConfirm = () => {
+    const val = input.value.trim();
+    closeModal();
+    if(val) onConfirm(val);
+  };
+  document.getElementById('modalConfirm').addEventListener('click', doConfirm);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') doConfirm(); if(e.key === 'Escape') closeModal(); });
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+
+// ═══════════════════════════════════════════
+// CUSTOM COMPONENT DIALOG
+// ═══════════════════════════════════════════
+function openCustomComponentDialog(editKey){
+  const overlay = document.getElementById('modalOverlay');
+  const modal = document.getElementById('modal');
+  const isEdit = !!editKey && !!CUSTOM_TYPES[editKey];
+  const existing = isEdit ? CUSTOM_TYPES[editKey] : null;
+
+  modal.innerHTML = `
+    <h3>${isEdit ? 'Edit Custom Component' : 'New Custom Component'}</h3>
+    <p>${isEdit ? 'Update this component’s definition.' : 'Define a reusable component for your architecture or workflow.'}</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div>
+        <label style="font-size:11px;color:var(--text-secondary)">Label</label>
+        <input id="cLabel" type="text" placeholder="e.g. GraphQL Gateway" value="${isEdit ? esc(existing.label) : ''}" style="width:100%;padding:8px 10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text-secondary)">Description</label>
+        <input id="cDesc" type="text" placeholder="Short description" value="${isEdit ? esc(existing.desc || '') : ''}" style="width:100%;padding:8px 10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text-secondary)">Icon (emoji)</label>
+        <div style="position:relative">
+          <input id="cIcon" type="text" placeholder="e.g. 🔧" value="${isEdit ? esc(existing.icon || '') : ''}" style="width:100%;padding:8px 10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;outline:none">
+          <button id="cIconBtn" type="button" title="Choose emoji" style="position:absolute;right:4px;top:4px;width:24px;height:24px;border-radius:4px;border:none;background:var(--bg-hover);color:var(--text-secondary);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">😊</button>
+          <div id="cIconPicker" style="display:none;position:absolute;left:0;top:calc(100% + 4px);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:6px;z-index:100;box-shadow:0 6px 24px rgba(0,0,0,0.4);max-width:240px;max-height:160px;overflow-y:auto;">
+            <div style="display:flex;flex-wrap:wrap;gap:2px;font-size:16px;">
+              ${['⚡','🤖','🔗','✉️','⏱️','🔀','🗄️','🖥️','🌐','🔐','📊','📦','🚀','☸️','🛡️','🔒','🔧','🧠','🧩','🧮','🧬','🧰','🛠️','📡','📥','📤','📣','📜','📈','📉','📄','📎','📌','📍','📝','🔍','🔎','🔑','🔨','🔩','🔌','🔦','🚦','🧱','🌍','🕸️','🐙','🐇','🐦','💾','💿','💿','💫','🌟','🎯','🧪','🧭','🧲','🧹','🧼'].map(e => `<button type="button" style="width:26px;height:26px;border-radius:4px;border:none;background:transparent;color:inherit;font-size:16px;cursor:pointer;" data-emoji="${e}">${e}</button>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text-secondary)">Color</label>
+        <input id="cColor" type="color" value="${isEdit ? existing.color : '#5b6bfa'}" style="width:100%;padding:4px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text-secondary)">Properties (comma-separated)</label>
+        <input id="cProps" type="text" placeholder="e.g. name,version,region" value="${isEdit ? esc((existing.props || []).join(', ')) : ''}" style="width:100%;padding:8px 10px;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;outline:none">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="cConfirm">${isEdit ? 'Save' : 'Create'}</button>
+    </div>
+  `;
+
+  overlay.classList.add('show');
+  document.getElementById('cLabel').focus();
+
+  // Emoji picker behavior
+  const iconInput = document.getElementById('cIcon');
+  const iconBtn = document.getElementById('cIconBtn');
+  const iconPicker = document.getElementById('cIconPicker');
+
+  iconBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    iconPicker.style.display = iconPicker.style.display === 'block' ? 'none' : 'block';
+  });
+
+  iconPicker.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-emoji]');
+    if (!btn) return;
+    const emoji = btn.dataset.emoji;
+    iconInput.value = emoji;
+    iconPicker.style.display = 'none';
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!iconPicker.contains(e.target) && e.target !== iconBtn) {
+      iconPicker.style.display = 'none';
+    }
+  });
+
+  document.getElementById('cConfirm').addEventListener('click', () => {
+    const label = document.getElementById('cLabel').value.trim();
+    const desc = document.getElementById('cDesc').value.trim();
+    const icon = document.getElementById('cIcon').value.trim() || '⚙️';
+    const color = document.getElementById('cColor').value;
+    const propsRaw = document.getElementById('cProps').value.trim();
+    const props = propsRaw
+      ? propsRaw.split(',').map(p => p.trim().toLowerCase()).filter(Boolean)
+      : ['name'];
+
+    if(!label){
+      alert('Label is required.');
+      return;
+    }
+
+    if(isEdit){
+      CUSTOM_TYPES[editKey] = {
+        label,
+        icon,
+        color,
+        desc: desc || label,
+        props
+      };
+    } else {
+      const key = 'c_' + Date.now();
+      CUSTOM_TYPES[key] = {
+        label,
+        icon,
+        color,
+        desc: desc || label,
+        props
+      };
+    }
+
+    buildPalette();
+    saveToLocalStorage();
+    closeModal();
+  });
+}
+
+function deleteCustomType(key){
+  if(!CUSTOM_TYPES[key]) return;
+
+  const nodesOfType = nodes.filter(n => n.type === 'custom_' + key);
+  if(nodesOfType.length > 0){
+    if(!confirm(`Delete this custom component?\n\n${nodesOfType.length} node(s) using it will also be removed.`)) return;
+  } else {
+    if(!confirm('Delete this custom component?')) return;
+  }
+
+  delete CUSTOM_TYPES[key];
+  nodesOfType.forEach(n => deleteNode(n.id));
+  buildPalette();
+  saveToLocalStorage();
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════
+// DOWNLOAD / OPEN FLOW
+// ═══════════════════════════════════════════
+function downloadFlow(){
+  const data = {
+    version: 1,
+    nodes,
+    connections,
+    customTypes: CUSTOM_TYPES
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'workflow.wflow';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function openFlow(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.nodes || !data.connections) {
+        alert('Invalid workflow file.');
+        return;
+      }
+
+      // Clear current
+      document.querySelectorAll('.node').forEach(el => el.remove());
+      nodes = [];
+      connections = [];
+      selectedNodeId = null;
+      nextId = 1;
+
+      // Load custom types if present
+      if(data.customTypes){
+        Object.assign(CUSTOM_TYPES, data.customTypes);
+      }
+
+      // Import nodes
+      nodes = data.nodes;
+      connections = data.connections;
+
+      // Ensure nextId is large enough
+      const maxId = nodes.reduce((m, n) => Math.max(m, n.id || 0), 0);
+      nextId = maxId + 1;
+
+      // Re-render
+      nodes.forEach(n => renderNode(n));
+      renderConnections();
+      updateSummary();
+      updateMinimap();
+      buildPalette();
+      updatePropsPanel();
+    } catch(err){
+      alert('Error loading file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ═══════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
