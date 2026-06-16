@@ -268,9 +268,9 @@
     <div class="topbar-status"><span class="dot"></span> Ready</div>
     <div class="topbar-actions">
       <input type="file" id="fileInput" accept=".wflow,.json" style="display:none" onchange="openFlow(event)">
+      <button class="btn btn-ghost btn-sm" onclick="createNew()" title="Create new workflow">+ New</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('fileInput').click()" title="Open a saved flow">Open</button>
       <button class="btn btn-ghost btn-sm" onclick="downloadFlow()" title="Download flow as JSON">↓ Save</button>
-      <button class="btn btn-ghost btn-sm" onclick="clearAll()" title="Clear canvas">Clear</button>
       <button class="btn btn-ghost btn-sm" onclick="toggleSummary()" title="Toggle summary">Summary</button>
       <button class="btn btn-primary btn-sm" onclick="runWorkflow()">▶ Run</button>
       <div class="topbar-overflow">
@@ -360,6 +360,24 @@
 // ═══════════════════════════════════════════
 // DATA: Node Types
 // ═══════════════════════════════════════════
+
+// ML components
+const ML_TYPES = {
+  model:           { label:'ML Model',         icon:'🧠', color:'var(--node-ai)',      desc:'Pre-trained or custom ML model',        props:['name','model_id','version','task'] },
+  dataset:         { label:'Dataset',          icon:'📊', color:'var(--blue)',          desc:'Training or evaluation dataset',        props:['name','source','format','split'] },
+  training:        { label:'Training Job',     icon:'⚙️', color:'var(--accent)',        desc:'Train an ML model',                     props:['name','config','hardware','epochs'] },
+  feature_store:   { label:'Feature Store',    icon:'🗂️', color:'var(--cyan)',          desc:'Store and manage features',             props:['name','provider','team'] },
+  evaluation:      { label:'Model Evaluation', icon:'🔬', color:'var(--green)',         desc:'Evaluate model performance',            props:['name','metrics','test_set'] },
+  endpoint:        { label:'Endpoint',         icon:'🌐', color:'var(--node-webhook)',  desc:'Deploy model as API endpoint',          props:['name','type','autoscaling'] },
+  pipeline:        { label:'ML Pipeline',      icon:'流水', color:'var(--orange)',       desc:'Orchestrate ML workflow',              props:['name','steps','retry'] },
+  preprocessing:   { label:'Preprocessing',    icon:'🧩', color:'var(--node-action)',   desc:'Data transformation',                   props:['name','techniques','output'] },
+  tuning:          { label:'Hyperparameter Tuning',icon:'🎛️',color:'var(--yellow)',     desc:'Optimize model parameters',             props:['name','method','search_space'] },
+  monitoring:      { label:'Model Monitoring', icon:'📈', color:'var(--node-delay)',   desc:'Track model performance and drift',    props:['name','metrics','alert_threshold'] },
+  retraining:      { label:'Retraining',       icon:'🔄', color:'var(--node-ai)',      desc:'Automated model retraining',            props:['name','schedule','trigger'] },
+  mlops:           { label:'MLOps Pipeline',   icon:'🚀', color:'var(--accent)',       desc:'End-to-end MLOps workflow',            props:['name','stages','tools'] },
+  llm:             { label:'LLM Endpoint',     icon:'🤖', color:'var(--node-ai)',      desc:'Large Language Model API',              props:['name','provider','context'] },
+  anon:            { label:'Dataset Anonymizer',icon:'🔒', color:'var(--purple)',       desc:'Anonymize sensitive data fields',      props:['name','strategy','fields','preserve_format'] },
+};
 
 // AI Workflow nodes
 const AI_FLOW_TYPES = {
@@ -461,7 +479,22 @@ const IT_ARCH_TYPES = {
   ...IT_CICD_TYPES,
 };
 
+// Source Code
+const SOURCE_CODE_TYPES = {
+  git:             { label:'Git Repository',   icon:'🐙', color:'var(--text-muted)',  desc:'Source control',                        props:['name','provider','branch'] },
+  docker:          { label:'Docker Build',     icon:'🐳', color:'var(--blue)',        desc:'Container build',                       props:['name','dockerfile','tag'] },
+};
+
+// Documents
+const DOCUMENT_TYPES = {
+  markdown:        { label:'Markdown Doc',     icon:'📄', color:'var(--purple)',    desc:'Documentation',                         props:['name','format','output'] },
+  pdf:             { label:'PDF Document',     icon:'📜', color:'var(--red)',       desc:'Document',                              props:['name','format','output'] },
+};
+
 const NODE_TYPES = {
+  ...ML_TYPES,
+  ...SOURCE_CODE_TYPES,
+  ...DOCUMENT_TYPES,
   ...AI_FLOW_TYPES,
   ...IT_ARCH_TYPES,
 };
@@ -665,6 +698,73 @@ function buildPalette(){
 
   // CI/CD & Infra
   addPaletteGroup(el, 'CI/CD & Infra', IT_CICD_TYPES, groupStates['CI/CD & Infra']);
+
+  // Source Code
+  const sourceGroup = document.createElement('div');
+  sourceGroup.className = 'palette-group';
+  if(groupStates['Source Code']) sourceGroup.classList.add('collapsed');
+  const sourceHeader = document.createElement('div');
+  sourceHeader.className = 'palette-group-header';
+  sourceHeader.innerHTML = `<span class="chev">▾</span><span class="group-title">Source Code</span><span class="count">${Object.keys(SOURCE_CODE_TYPES).length}</span>`;
+  sourceHeader.addEventListener('click', () => {
+    sourceGroup.classList.toggle('collapsed');
+    const states = loadPaletteGroupStates();
+    states['Source Code'] = sourceGroup.classList.contains('collapsed');
+    savePaletteGroupStates(states);
+  });
+  sourceGroup.appendChild(sourceHeader);
+
+  const sourceItems = document.createElement('div');
+  sourceItems.className = 'palette-items';
+
+  for(const [key, type] of Object.entries(SOURCE_CODE_TYPES)){
+    const div = document.createElement('div');
+    div.className = 'node-item';
+    div.draggable = true;
+    div.dataset.type = key;
+    div.innerHTML = `<div class="icon" style="background:${type.color}22;color:${type.color}">${type.icon}</div><div><span>${type.label}</span><span class="node-type-label">${type.desc}</span></div>`;
+    div.dataset.searchText = (type.label + ' ' + (type.desc || '')).toLowerCase();
+    div.addEventListener('dragstart', onPaletteDragStart);
+    sourceItems.appendChild(div);
+  }
+
+  sourceGroup.appendChild(sourceItems);
+  el.appendChild(sourceGroup);
+
+  // Documents
+  const docGroup = document.createElement('div');
+  docGroup.className = 'palette-group';
+  if(groupStates['Documents']) docGroup.classList.add('collapsed');
+  const docHeader = document.createElement('div');
+  docHeader.className = 'palette-group-header';
+  docHeader.innerHTML = `<span class="chev">▾</span><span class="group-title">Documents</span><span class="count">${Object.keys(DOCUMENT_TYPES).length}</span>`;
+  docHeader.addEventListener('click', () => {
+    docGroup.classList.toggle('collapsed');
+    const states = loadPaletteGroupStates();
+    states['Documents'] = docGroup.classList.contains('collapsed');
+    savePaletteGroupStates(states);
+  });
+  docGroup.appendChild(docHeader);
+
+  const docItems = document.createElement('div');
+  docItems.className = 'palette-items';
+
+  for(const [key, type] of Object.entries(DOCUMENT_TYPES)){
+    const div = document.createElement('div');
+    div.className = 'node-item';
+    div.draggable = true;
+    div.dataset.type = key;
+    div.innerHTML = `<div class="icon" style="background:${type.color}22;color:${type.color}">${type.icon}</div><div><span>${type.label}</span><span class="node-type-label">${type.desc}</span></div>`;
+    div.dataset.searchText = (type.label + ' ' + (type.desc || '')).toLowerCase();
+    div.addEventListener('dragstart', onPaletteDragStart);
+    docItems.appendChild(div);
+  }
+
+  docGroup.appendChild(docItems);
+  el.appendChild(docGroup);
+
+  // ML group
+  addPaletteGroup(el, 'ML Components', ML_TYPES, groupStates['ML Components']);
 
   // Custom group
   const customGroup = document.createElement('div');
@@ -1230,6 +1330,27 @@ function addNode(type, x, y){
   if(type === 'registry') { node.settings.provider = 'Docker Hub'; node.settings.scope = 'private'; }
   if(type === 'infra_as_code') { node.settings.tool = 'Terraform'; node.settings.state = 'remote'; }
   if(type === 'git') { node.settings.provider = 'GitHub'; node.settings.branch = 'main'; }
+  if(type === 'source_git') { node.settings.provider = 'GitHub'; node.settings.branch = 'main'; }
+  if(type === 'source_docker') { node.settings.dockerfile = 'Dockerfile'; node.settings.tag = 'latest'; }
+  if(type === 'doc_markdown') { node.settings.format = 'md'; node.settings.output = ''; }
+  if(type === 'doc_pdf') { node.settings.format = 'pdf'; node.settings.output = ''; }
+
+  // Defaults per type (ML components)
+  if(type === 'model') { node.settings.model_id = ''; node.settings.version = 'v1'; node.settings.task = 'classification'; }
+  if(type === 'dataset') { node.settings.source = ''; node.settings.format = 'parquet'; node.settings.split = '80/20'; }
+  if(type === 'training') { node.settings.config = ''; node.settings.hardware = 'GPU'; node.settings.epochs = '100'; }
+  if(type === 'feature_store') { node.settings.provider = 'Feast'; node.settings.team = 'data'; }
+  if(type === 'evaluation') { node.settings.metrics = 'accuracy,f1'; node.settings.test_set = ''; }
+  if(type === 'endpoint') { node.settings.type = 'REST'; node.settings.autoscaling = 'auto'; }
+  if(type === 'pipeline') { node.settings.steps = 'load,train,persist'; node.settings.retry = '3'; }
+  if(type === 'preprocessing') { node.settings.techniques = 'normalize,encode'; node.settings.output = ''; }
+  if(type === 'tuning') { node.settings.method = 'grid'; node.settings.search_space = ''; }
+  if(type === 'monitoring') { node.settings.metrics = 'latency,accuracy'; node.settings.alert_threshold = '0.1'; }
+  if(type === 'retraining') { node.settings.schedule = '0 0 * * *'; node.settings.trigger = 'drift'; }
+  if(type === 'mlops') { node.settings.stages = 'data,train,evaluate,deploy'; node.settings.tools = 'MLflow'; }
+  if(type === 'llm') { node.settings.provider = 'OpenAI'; node.settings.context = '4k'; }
+  if(type === 'anon') { node.settings.strategy = 'mask'; node.settings.fields = 'email,phone,social_security'; node.settings.preserve_format = 'true'; }
+
   nodes.push(node);
   renderNode(node);
   selectNode(node.id);
@@ -1889,6 +2010,11 @@ function loadSampleWorkflow(){
 // ═══════════════════════════════════════════
 function deleteSelected(){
   if(selectedNodeId !== null) deleteNode(selectedNodeId);
+}
+
+function createNew(){
+  if(nodes.length > 0 && !confirm('Start new workflow? Current nodes will be cleared.')) return;
+  clearAll();
 }
 
 function clearAll(){
