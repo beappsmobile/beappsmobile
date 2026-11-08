@@ -3,171 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Deletion Request</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-            padding: 48px;
-        }
-        
-        .icon {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-        }
-        
-        .icon svg {
-            width: 32px;
-            height: 32px;
-            stroke: white;
-            fill: none;
-            stroke-width: 2;
-        }
-        
-        h1 {
-            text-align: center;
-            color: #1a202c;
-            font-size: 28px;
-            margin-bottom: 16px;
-        }
-        
-        .description {
-            text-align: center;
-            color: #4a5568;
-            line-height: 1.6;
-            margin-bottom: 32px;
-            font-size: 16px;
-        }
-        
-        .email-box {
-            background: #f7fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        
-        .email-label {
-            color: #718096;
-            font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        .email-address {
-            color: #667eea;
-            font-size: 20px;
-            font-weight: 600;
-            word-break: break-all;
-        }
-        
-        .email-link {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            padding: 16px 32px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .email-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-        }
-        
-        .email-link:active {
-            transform: translateY(0);
-        }
-        
-        .info-box {
-            background: #eef2ff;
-            border-left: 4px solid #667eea;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 24px;
-        }
-        
-        .info-box p {
-            color: #4a5568;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        
-        @media (max-width: 480px) {
-            .container {
-                padding: 32px 24px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
-            
-            .email-address {
-                font-size: 18px;
-            }
-        }
-    </style>
+    <title>Account Deletion Request | BEAppsMobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="images/beappsmobile_logo.png" type="image/png">
 </head>
 <body>
-    <div class="container">
-        <div class="icon">
-            <svg viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-        </div>
-        
-        <h1>Account Deletion Request</h1>
-        
-        <p class="description">
-            To request the deletion of your account and associated data from our app, please contact our support team via email. We will process your request in accordance with applicable data protection regulations.
-        </p>
-        
-        <div class="email-box">
-            <div class="email-label">Contact us at:</div>
-            <div class="email-address">support@beappsmobile.com</div>
-        </div>
-        
-        <div style="text-align: center;">
-            <a href="mailto:support@beappsmobile.com?subject=Account Deletion Request" class="email-link">
-                Send Email
+    <header class="main-header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <span class="logo-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        <path d="M9.5 7.5a3.5 3.5 0 0 1 5 0"></path>
+                        <path d="M7.5 5.5a6.5 6.5 0 0 1 9 0"></path>
+                    </svg>
+                </span>
+                <span class="logo-text">BEApps<span>Mobile</span></span>
             </a>
+            <nav class="nav-links" aria-label="Secondary Navigation">
+                <a href="index.html"><i class="fas fa-arrow-left"></i> &nbsp;Back to Home</a>
+                <a href="index.html#contact" class="nav-cta">Contact Support</a>
+            </nav>
         </div>
-        
-        <div class="info-box">
-            <p>
-                <strong>What to include:</strong> Please provide your account email or user ID in your deletion request so we can identify and process your data efficiently.
-            </p>
+    </header>
+
+    <main class="legal-main">
+        <div class="container">
+            <article class="legal-card" style="max-width: 640px;">
+                <header class="legal-header" style="text-align: center;">
+                    <div class="badge-pill">Data Privacy &amp; Control</div>
+                    <h1>Account Deletion Request</h1>
+                    <p class="legal-meta">Request permanent removal of your account and associated data</p>
+                </header>
+
+                <p style="text-align: center;">
+                    To request the deletion of your account and associated data from any BEAppsMobile application, please contact our support team via email. We will process your request promptly in accordance with applicable data protection regulations.
+                </p>
+
+                <div class="email-callout">
+                    <div class="label">Send your deletion request to:</div>
+                    <div class="address">support@beappsmobile.com</div>
+                    <a href="mailto:support@beappsmobile.com?subject=Account%20Deletion%20Request" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Send Deletion Request Email
+                    </a>
+                </div>
+
+                <div class="legal-summary">
+                    <h2>What to Include</h2>
+                    <p>
+                        Please provide your registered account email address or user ID, along with the name of the app (e.g., <strong>Spark Startup Ideas</strong>), so we can identify and permanently remove your data efficiently.
+                    </p>
+                </div>
+            </article>
         </div>
-    </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+                <p>Copyright &copy; 2026 BEAppsMobile. All Rights Reserved.</p>
+                <p><a href="index.html">Return to Home</a> &nbsp;&bull;&nbsp; <a href="mailto:support@beappsmobile.com">support@beappsmobile.com</a></p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

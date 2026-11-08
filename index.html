@@ -3,105 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BEAppsMobile</title>
+    <title>BEAppsMobile — Wireless PC Control &amp; Mobile Utility Apps</title>
+    <meta name="description" content="Turn your smartphone into a wireless PC keyboard, trackpad, and presentation remote over Wi-Fi or Bluetooth. Download official BEAppsMobile Windows PC clients and explore our mobile utility apps.">
+    <meta property="og:title" content="BEAppsMobile — Control Your PC With Your Phone">
+    <meta property="og:description" content="Seamlessly connect your mobile device to your computer over Wi-Fi or Bluetooth. Type, present, and control with zero latency.">
+    <meta property="og:type" content="website">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="images/beappsmobile_logo.png" type="image/png">
 </head>
 <body>
     <header class="main-header">
-        <div class="container">
+        <div class="container header-inner">
             <a href="index.html" class="logo">
-                <img src="images/beappsmobile_logo.png" alt="BEAppsMobile Logo">
-                <span>BEAppsMobile</span>
+                <span class="logo-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        <path d="M9.5 7.5a3.5 3.5 0 0 1 5 0"></path>
+                        <path d="M7.5 5.5a6.5 6.5 0 0 1 9 0"></path>
+                    </svg>
+                </span>
+                <span class="logo-text">BEApps<span>Mobile</span></span>
             </a>
-            <nav>
-                <a href="#downloads">Downloads</a>
+            <nav class="nav-links" aria-label="Primary Navigation">
+                <a href="#how-it-works">How It Works</a>
+                <a href="#downloads">PC Clients</a>
+                <a href="#apps">Our Apps</a>
                 <a href="#video">Demo</a>
+                <a href="#faq">FAQ</a>
                 <a href="#contact">Contact</a>
+                <a href="#downloads" class="nav-cta"><i class="fas fa-download"></i> &nbsp;Download</a>
             </nav>
         </div>
     </header>
+
     <main>
+        <!-- Hero Section -->
         <section class="hero">
             <div class="container hero-container">
                 <div class="hero-content">
-                    <h2>Control Your PC With Your Phone</h2>
-                    <p>Seamlessly connect your mobile device to your computer. Type, present, and control with ease.</p>
-                    <a href="#downloads" class="btn">Get Your PC Client</a>
+                    <div class="badge-pill">
+                        <span class="badge-dot"></span>
+                        Wireless PC Control Suite
+                    </div>
+                    <h1>Control Your PC <span class="text-gradient">With Your Phone</span></h1>
+                    <p>Transform your smartphone into a responsive wireless keyboard, touchpad, and presentation controller. Connect effortlessly over local Wi-Fi or Bluetooth in seconds.</p>
+                    <div class="hero-actions">
+                        <a href="#downloads" class="btn btn-primary">
+                            <i class="fab fa-windows"></i> Get Your PC Client
+                        </a>
+                        <a href="#video" class="btn btn-secondary">
+                            <i class="fas fa-play-circle"></i> Watch Demo Video
+                        </a>
+                    </div>
+                    <div class="hero-trust">
+                        <span class="trust-item"><i class="fas fa-wifi"></i> Wi-Fi &amp; Bluetooth</span>
+                        <span class="trust-item"><i class="fas fa-bolt"></i> Real-Time Low Latency</span>
+                        <span class="trust-item"><i class="fas fa-shield-alt"></i> Local Network Pairing</span>
+                    </div>
                 </div>
-                <div class="hero-image-wrapper">
-                    <img src="images/header-screen-laptop.png" alt="Header Screen Laptop" class="hero-image">
+
+                <div class="hero-visual">
+                    <div class="device-scene">
+                        <div class="pc-window">
+                            <div class="pc-window-bar">
+                                <div class="window-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div class="window-status">
+                                    <span class="badge-dot"></span> Connected • Mobile Client Active
+                                </div>
+                            </div>
+                            <div class="pc-screen-body">
+                                <div class="pc-screen-preview">
+                                    <img src="images/header-screen-laptop.png" alt="BEAppsMobile Wireless Laptop Control">
+                                </div>
+                                <div class="live-overlay-bar">
+                                    <div class="live-typing">
+                                        <i class="fas fa-keyboard"></i>
+                                        <span>Remote input active</span>
+                                        <span class="cursor-blink"></span>
+                                    </div>
+                                    <div class="signal-badges">
+                                        <span class="signal-badge"><i class="fas fa-wifi"></i> Wi-Fi</span>
+                                        <span class="signal-badge"><i class="fab fa-bluetooth-b"></i> BT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="steps-section">
+            <div class="container">
+                <div class="section-header">
+                    <div class="badge-pill">Quick Setup</div>
+                    <h3>Up and Running in <span class="text-gradient">3 Simple Steps</span></h3>
+                    <p>No complex configuration or cloud accounts required. Pair your phone directly with your Windows PC.</p>
+                </div>
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">01</div>
+                        <h4>Install the PC Server</h4>
+                        <p>Download and install the lightweight Windows companion client for <strong>PC Keyboard</strong> or <strong>Presentation Remote</strong> below.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">02</div>
+                        <h4>Open the Mobile App</h4>
+                        <p>Launch the companion BEAppsMobile app on your Android phone and choose either local Wi-Fi or Bluetooth connection mode.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">03</div>
+                        <h4>Scan &amp; Control Instantly</h4>
+                        <p>Scan the QR code or select your PC from the discovered devices list to start typing, navigating slides, and controlling your desktop.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Downloads Section -->
         <section id="downloads" class="downloads-section">
             <div class="container">
-                <h3>Available PC Clients</h3>
+                <div class="section-header">
+                    <div class="badge-pill">Desktop Companion Servers</div>
+                    <h3>Available <span class="text-gradient">PC Clients</span></h3>
+                    <p>Download the official Windows server installer for your mobile app.</p>
+                </div>
+
                 <div class="cards-container">
-                    <div class="card">
-                        <img src="images/PC Keyboard Icon.png" alt="PC Keyboard Icon">
-                        <h4>PC Keyboard</h4>
-                        <p>Type what ever you want on your phone and it will be automatically typed on your PC.</p>
-                        <a href="PCKeyboardV30_Installer.zip" class="btn">Download</a>
+                    <!-- PC Keyboard Card -->
+                    <div class="client-card">
+                        <div>
+                            <div class="client-card-top">
+                                <div class="app-icon-wrap">
+                                    <img src="images/PC Keyboard Icon.png" alt="PC Keyboard Icon">
+                                </div>
+                                <div class="version-meta">
+                                    <span class="version-tag">Version 3.0</span>
+                                    <span class="os-tag"><i class="fab fa-windows"></i> Windows 10 / 11</span>
+                                </div>
+                            </div>
+                            <h4>PC Keyboard</h4>
+                            <p>Type whatever you want on your phone and have it automatically typed on your PC in real time over Wi-Fi or Bluetooth.</p>
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check-circle"></i> Wireless keyboard &amp; mouse trackpad input</li>
+                                <li><i class="fas fa-check-circle"></i> Instant QR code pairing &amp; Bluetooth discovery</li>
+                                <li><i class="fas fa-check-circle"></i> Supports both PC Keyboard Freemium &amp; Pro editions</li>
+                            </ul>
+                        </div>
+                        <div class="client-card-footer">
+                            <a href="PCKeyboardV30_Installer.zip" class="btn btn-primary btn-block" download>
+                                <i class="fas fa-download"></i> Download Installer (ZIP • 2.3 MB)
+                            </a>
+                            <div class="download-subtext">
+                                <span><i class="fas fa-file-archive"></i> PCKeyboardV30_Installer.zip</span>
+                                <a href="privacy_policy.html">Privacy Policy</a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card">
-                        <img src="images/Presentation Remote Icon.png" alt="Presentation Remote Icon">
-                        <h4>PRESENTATION REMOTE</h4>
-                        <p>Control your presentation with an easy and simple way.</p>
-                        <a href="Presentation_Remote_v9.0.zip" class="btn">Download</a>
+
+                    <!-- Presentation Remote Card -->
+                    <div class="client-card">
+                        <div>
+                            <div class="client-card-top">
+                                <div class="app-icon-wrap">
+                                    <img src="images/Presentation Remote Icon.png" alt="Presentation Remote Icon">
+                                </div>
+                                <div class="version-meta">
+                                    <span class="version-tag">Version 9.0</span>
+                                    <span class="os-tag"><i class="fab fa-windows"></i> Windows 10 / 11</span>
+                                </div>
+                            </div>
+                            <h4>Presentation Remote</h4>
+                            <p>Control your slide decks and presentations with an intuitive, distraction-free mobile remote built for speakers and educators.</p>
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check-circle"></i> Seamless slide forward/back &amp; presentation control</li>
+                                <li><i class="fas fa-check-circle"></i> Works over local Wi-Fi or Bluetooth connection</li>
+                                <li><i class="fas fa-check-circle"></i> Compatible with PowerPoint, PDF &amp; keynote viewers</li>
+                            </ul>
+                        </div>
+                        <div class="client-card-footer">
+                            <a href="Presentation_Remote_v9.0.zip" class="btn btn-primary btn-block" download>
+                                <i class="fas fa-download"></i> Download Installer (ZIP • 915 KB)
+                            </a>
+                            <div class="download-subtext">
+                                <span><i class="fas fa-file-archive"></i> Presentation_Remote_v9.0.zip</span>
+                                <a href="privacy_policy-presentationremote.html">Privacy Policy</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- Mobile Apps Portfolio Section -->
+        <section id="apps" class="portfolio-section">
+            <div class="container">
+                <div class="section-header">
+                    <div class="badge-pill">Mobile App Ecosystem</div>
+                    <h3>More Apps by <span class="text-gradient">BEAppsMobile</span></h3>
+                    <p>Purpose-built Android utilities, hardware remotes, and productivity tools designed for speed and simplicity.</p>
+                </div>
+
+                <div class="portfolio-grid">
+                    <!-- Lumen Flashlight -->
+                    <div class="app-card">
+                        <div>
+                            <div class="app-card-header">
+                                <div class="app-glyph glyph-amber">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <span class="app-category">Utility • Offline</span>
+                            </div>
+                            <h4>Lumen Flashlight</h4>
+                            <p>Tactical LED torch and screen light with adjustable brightness, strobe patterns, and live battery indicator. 100% offline with zero ads or tracking.</p>
+                        </div>
+                        <div>
+                            <div class="app-tags">
+                                <span>Ad-Free</span>
+                                <span>Zero Permissions Abuse</span>
+                                <span>Strobe &amp; Screen Light</span>
+                            </div>
+                            <a href="privacy-policy-lumen.html" class="app-card-link">
+                                Privacy Policy <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Arduino Remote -->
+                    <div class="app-card">
+                        <div>
+                            <div class="app-card-header">
+                                <div class="app-glyph glyph-cyan">
+                                    <i class="fas fa-microchip"></i>
+                                </div>
+                                <span class="app-category">IoT &amp; Hardware</span>
+                            </div>
+                            <h4>Arduino Remote</h4>
+                            <p>Control your microcontrollers, robotics projects, and DIY hardware prototypes directly from your smartphone over Bluetooth or local Wi-Fi.</p>
+                        </div>
+                        <div>
+                            <div class="app-tags">
+                                <span>Bluetooth &amp; Wi-Fi</span>
+                                <span>Maker Utility</span>
+                                <span>Low-Latency Serial</span>
+                            </div>
+                            <a href="privacy_policy-arduinoremote.html" class="app-card-link">
+                                Privacy Policy <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Spark Startup Ideas -->
+                    <div class="app-card">
+                        <div>
+                            <div class="app-card-header">
+                                <div class="app-glyph glyph-indigo">
+                                    <i class="fas fa-rocket"></i>
+                                </div>
+                                <span class="app-category">Community &amp; Ideas</span>
+                            </div>
+                            <h4>Spark Startup Ideas</h4>
+                            <p>Discover, share, and validate startup concepts with a community of builders. Brainstorm new product directions and gather feedback.</p>
+                        </div>
+                        <div>
+                            <div class="app-tags">
+                                <span>Idea Validation</span>
+                                <span>Community Feedback</span>
+                                <span>Entrepreneurship</span>
+                            </div>
+                            <a href="privacy_policy_startup.html" class="app-card-link">
+                                Privacy Policy <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demo Video Section -->
         <section id="video" class="video-section">
             <div class="container">
-                <h3>Demo Video</h3>
-                <div class="video-wrapper">
-                    <iframe width="560" height="315" src="https://www.youtube.com/embed/x3MehdMgYpQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <div class="section-header">
+                    <div class="badge-pill">Walkthrough</div>
+                    <h3>See It <span class="text-gradient">In Action</span></h3>
+                    <p>Watch how quickly you can install the PC client and pair your phone.</p>
+                </div>
+                <div class="video-frame">
+                    <div class="pc-window-bar" style="border-radius: 12px 12px 0 0; margin-bottom: 0.75rem;">
+                        <div class="window-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">BEAppsMobile — Setup &amp; Demo Walkthrough</span>
+                    </div>
+                    <div class="video-wrapper">
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/x3MehdMgYpQ" title="BEAppsMobile Demo Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="faq-section">
+            <div class="container">
+                <div class="section-header">
+                    <div class="badge-pill">Support &amp; Troubleshooting</div>
+                    <h3>Frequently Asked <span class="text-gradient">Questions</span></h3>
+                    <p>Quick answers to common setup and connectivity questions.</p>
+                </div>
+
+                <div class="faq-list">
+                    <details class="faq-item" open>
+                        <summary>
+                            <span>How do I connect my phone to my PC over Wi-Fi?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            Make sure both your smartphone and your Windows PC are connected to the same local Wi-Fi network (or mobile hotspot). Launch the PC client on your computer, open the mobile app, and either scan the displayed QR code or select your PC's IP address to connect immediately.
+                        </div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>
+                            <span>Can I use PC Keyboard or Presentation Remote without Wi-Fi?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            Yes! Both applications support Bluetooth connectivity. Simply pair your phone with your PC in Windows Bluetooth settings, start the PC client, and select Bluetooth mode inside the mobile app.
+                        </div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>
+                            <span>What if Windows Firewall blocks the connection?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            When you launch the PC client for the first time, Windows Defender Firewall may ask for permission to allow communication on private networks. Ensure you check <strong>Private networks</strong> and click <strong>Allow access</strong> so your phone can reach the PC server.
+                        </div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary>
+                            <span>How can I request account or data deletion?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            Most of our utility apps operate without requiring user registration. For apps that support user accounts, you can submit a deletion request anytime via our <a href="data_deletion.html">Account Deletion Request</a> page or by emailing <a href="mailto:support@beappsmobile.com">support@beappsmobile.com</a>.
+                        </div>
+                    </details>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- Footer -->
     <footer id="contact">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section about">
                     <a href="index.html" class="logo">
-                        <img src="images/beappsmobile_logo.png" alt="BEAppsMobile Logo">
-                        <span>BEAppsMobile</span>
+                        <span class="logo-mark" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                <path d="M9.5 7.5a3.5 3.5 0 0 1 5 0"></path>
+                                <path d="M7.5 5.5a6.5 6.5 0 0 1 9 0"></path>
+                            </svg>
+                        </span>
+                        <span class="logo-text">BEApps<span>Mobile</span></span>
                     </a>
-                    <p>Providing simple and effective solutions for PC remote control.</p>
-                    <div class="contact">
-                        <span><i class="fas fa-envelope"></i> &nbsp; support@beappsmobile.com</span>
-                        <span><i class="fas fa-map-marker-alt"></i> &nbsp; 7 Soliman Gohar, Dokki, Egypt</span>
+                    <p>Providing simple, fast, and reliable wireless solutions for PC remote control and mobile utilities.</p>
+                    <div class="contact-list">
+                        <a href="mailto:support@beappsmobile.com"><i class="fas fa-envelope"></i> support@beappsmobile.com</a>
+                        <span><i class="fas fa-map-marker-alt"></i> 7 Soliman Gohar, Dokki, Egypt</span>
                     </div>
                 </div>
-                <div class="footer-section links">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="#downloads">Downloads</a></li>
-                        <li><a href="#video">Demo</a></li>
-                        <li><a href="privacy_policy.html">Privacy Policy</a></li>
+
+                <div class="footer-section">
+                    <h4>Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#downloads">PC Client Downloads</a></li>
+                        <li><a href="#apps">Mobile App Portfolio</a></li>
+                        <li><a href="#video">Demo Walkthrough</a></li>
+                        <li><a href="#faq">Troubleshooting FAQ</a></li>
                     </ul>
                 </div>
-                <div class="footer-section social">
-                    <h4>Follow Us</h4>
-                    <div class="social-icons">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                    </div>
+
+                <div class="footer-section">
+                    <h4>Privacy &amp; Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy_policy.html">PC Keyboard Privacy Policy</a></li>
+                        <li><a href="privacy_policy_full_version.html">PC Keyboard Pro Privacy Policy</a></li>
+                        <li><a href="privacy_policy-presentationremote.html">Presentation Remote Privacy Policy</a></li>
+                        <li><a href="privacy-policy-lumen.html">Lumen Flashlight Privacy Policy</a></li>
+                        <li><a href="privacy_policy-arduinoremote.html">Arduino Remote Privacy Policy</a></li>
+                        <li><a href="privacy_policy_startup.html">Spark Startup Ideas Privacy Policy</a></li>
+                        <li><a href="data_deletion.html">Account Deletion Request</a></li>
+                    </ul>
                 </div>
             </div>
+
             <div class="footer-bottom">
-                <p>Copyright © 2025 BEAppsMobile. All Rights Reserved.</p>
+                <p>Copyright &copy; 2026 BEAppsMobile. All Rights Reserved.</p>
+                <p>Built for seamless mobile-to-PC productivity.</p>
             </div>
         </div>
     </footer>
