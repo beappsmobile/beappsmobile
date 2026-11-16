@@ -303,8 +303,12 @@
                         </div>
                         <span style="font-size: 0.8rem; color: var(--text-muted);">BEAppsMobile — Setup &amp; Demo Walkthrough</span>
                     </div>
-                    <div class="video-wrapper">
-                        <iframe width="560" height="315" src="https://www.youtube.com/embed/x3MehdMgYpQ" title="BEAppsMobile Demo Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                    <div class="video-wrapper" id="demo-video-container">
+                        <button type="button" class="video-facade" id="load-demo-video" aria-label="Play BEAppsMobile Demo Video">
+                            <span class="video-play-btn"><i class="fas fa-play"></i></span>
+                            <span class="video-facade-title">Play Demo Walkthrough</span>
+                            <span class="video-facade-note"><i class="fas fa-shield-alt"></i> Privacy-Enhanced Mode — Clicking play loads the video from YouTube (youtube-nocookie.com).</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -399,7 +403,7 @@
                 </div>
 
                 <div class="footer-section">
-                    <h4>Privacy &amp; Legal</h4>
+                    <h4>App Privacy Policies</h4>
                     <ul class="footer-links">
                         <li><a href="privacy_policy.html">PC Keyboard Privacy Policy</a></li>
                         <li><a href="privacy_policy_full_version.html">PC Keyboard Pro Privacy Policy</a></li>
@@ -407,16 +411,36 @@
                         <li><a href="privacy-policy-lumen.html">Lumen Flashlight Privacy Policy</a></li>
                         <li><a href="privacy_policy-arduinoremote.html">Arduino Remote Privacy Policy</a></li>
                         <li><a href="privacy_policy_startup.html">Spark Startup Ideas Privacy Policy</a></li>
-                        <li><a href="data_deletion.html">Account Deletion Request</a></li>
+                        <li><a href="data_deletion.html">App Account Deletion Request</a></li>
                     </ul>
                 </div>
             </div>
 
             <div class="footer-bottom">
                 <p>Copyright &copy; 2026 BEAppsMobile. All Rights Reserved.</p>
-                <p>Built for seamless mobile-to-PC productivity.</p>
+                <p><a href="website-privacy.html">Website Privacy Notice (Cloudflare &amp; Cookies)</a></p>
             </div>
         </div>
     </footer>
+
+    <script>
+        (function () {
+            var btn = document.getElementById('load-demo-video');
+            var container = document.getElementById('demo-video-container');
+            if (btn && container) {
+                btn.addEventListener('click', function () {
+                    var iframe = document.createElement('iframe');
+                    iframe.width = '560';
+                    iframe.height = '315';
+                    iframe.src = 'https://www.youtube-nocookie.com/embed/x3MehdMgYpQ?autoplay=1&rel=0';
+                    iframe.title = 'BEAppsMobile Demo Video';
+                    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                    iframe.allowFullscreen = true;
+                    container.innerHTML = '';
+                    container.appendChild(iframe);
+                });
+            }
+        })();
+    </script>
 </body>
 </html>
